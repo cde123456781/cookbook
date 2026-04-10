@@ -2,7 +2,7 @@
 
 ## TODO
 
-- [ ] Deploy on Vercel
+- [x] Deploy on Vercel
 - [ ] Scaffold Basic UI
 - [ ] Connect to DB
 - [ ] Attach DB to UI
