@@ -21,7 +21,9 @@ export default function RootLayout({
     <html lang="en" data-theme="retro" className={``}>
       <body>
         <header><Navbar/></header>
+        <div className="pt-20">
         {children}
+        </div>
       </body>
     </html>
   );

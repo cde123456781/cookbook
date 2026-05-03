@@ -22,6 +22,7 @@ const MockImages = mockUrls.map((url, index) => ({
 export default function HomePage() {
   return (
     <main className="flex min-h-screen flex-col">
+      <SearchBar/>
       <div className="flex flex-wrap items-center justify-center">
         {
           MockImages.map((image) => (
@@ -36,5 +37,25 @@ export default function HomePage() {
         }
       </div>
     </main>
+  );
+}
+
+
+function SearchBar() {
+  return (
+    <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-m border p-4 m-auto flex gap-8">
+      <legend className="fieldset-legend">Search Recipes</legend>
+      <div className="">
+        <label className="label">Title</label>
+        <input type="text" className="input" placeholder="" />
+      </div>
+      
+
+      <div className="">
+        <label className="label">Category</label>
+        <input type="text" className="input" placeholder="" />
+      </div>
+    </fieldset>
+
   );
 }
