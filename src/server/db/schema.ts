@@ -1,8 +1,8 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { index, integer, pgTableCreator, primaryKey, timestamp, varchar, pgTable, text, boolean, } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { index, integer, pgTableCreator, primaryKey, timestamp, varchar, pgTable, text, boolean, check, } from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -22,7 +22,6 @@ export const recipes = createTable(
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
     description: varchar({ length: 256}),
     imageUrl: varchar({ length: 256 }),
-    categoryId: integer().references(() => categories.id)
   },
   (t) => [index("name_idx").on(t.title)],
 );
@@ -59,19 +58,36 @@ export const recipes_ingredients = createTable(
   {
     recipeId: integer().references(() => recipes.id).notNull(),
     ingredientId: integer().references(() => ingredients.id).notNull(),
-    unitId: integer().references(() => units.id).notNull()
+    unitId: integer().references(() => units.id).notNull(),
+    amount: integer().notNull()
   },
   (table) => [
-    primaryKey({columns: [table.recipeId, table.ingredientId, table.unitId]})
+    primaryKey({columns: [table.recipeId, table.ingredientId, table.unitId]}),
+    check("amount_check", sql`${table.amount} > 0`),
   ]
 )
+
+export const recipes_categories = createTable(
+  "recipes_categories",
+  {
+    recipeId: integer().references(() => recipes.id).notNull(),
+    categoryId: integer().references(() => categories.id).notNull(),
+
+  },
+  (table) => [
+    primaryKey({columns: [table.recipeId, table.categoryId]})
+  ]
+)
+
+
 
 export const steps = createTable(
   "steps",
   {
     recipeId: integer().references(() => recipes.id).notNull(),
     stepNumber: integer().notNull(),
-    stepDescription: varchar({ length: 256 }).notNull()
+    stepDescription: varchar({ length: 256 }).notNull(),
+    imageUrl: varchar({ length: 256 }),
   },
   (table) => [
     primaryKey({columns: [table.recipeId, table.stepNumber]})
@@ -93,7 +109,7 @@ export const recipeNotes = createTable(
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
-  name: text("name").notNull(),
+  username: text("username").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
