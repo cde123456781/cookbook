@@ -22,8 +22,9 @@ export const recipes = createTable(
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
     description: varchar({ length: 256}),
     imageUrl: varchar({ length: 256 }),
+    authorId: integer().notNull().references(() => user.id, { onDelete: "cascade"})
   },
-  (t) => [index("name_idx").on(t.title)],
+  (t) => [index("recipe_title_idx").on(t.title)],
 );
 
 
@@ -56,7 +57,7 @@ export const units = createTable(
 export const recipes_ingredients = createTable(
   "recipes_ingredients",
   {
-    recipeId: integer().references(() => recipes.id).notNull(),
+    recipeId: integer().references(() => recipes.id, { onDelete: "cascade"}).notNull(),
     ingredientId: integer().references(() => ingredients.id).notNull(),
     unitId: integer().references(() => units.id).notNull(),
     amount: integer().notNull()
@@ -70,7 +71,7 @@ export const recipes_ingredients = createTable(
 export const recipes_categories = createTable(
   "recipes_categories",
   {
-    recipeId: integer().references(() => recipes.id).notNull(),
+    recipeId: integer().references(() => recipes.id, { onDelete: "cascade" }).notNull(),
     categoryId: integer().references(() => categories.id).notNull(),
 
   },
@@ -84,7 +85,7 @@ export const recipes_categories = createTable(
 export const steps = createTable(
   "steps",
   {
-    recipeId: integer().references(() => recipes.id).notNull(),
+    recipeId: integer().references(() => recipes.id, { onDelete: "cascade" }).notNull(),
     stepNumber: integer().notNull(),
     stepDescription: varchar({ length: 256 }).notNull(),
     imageUrl: varchar({ length: 256 }),
@@ -98,7 +99,7 @@ export const recipeNotes = createTable(
   "recipeNotes",
   {
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    recipeId: integer().references(() => recipes.id).notNull(),
+    recipeId: integer().references(() => recipes.id, { onDelete: "cascade" }).notNull(),
     note: varchar({ length: 256 }).notNull()
   }
 )
@@ -107,7 +108,7 @@ export const recipeNotes = createTable(
 
 
 
-export const user = pgTable("user", {
+export const user = createTable("user", {
   id: text("id").primaryKey(),
   username: text("username").notNull(),
   email: text("email").notNull().unique(),
@@ -120,7 +121,7 @@ export const user = pgTable("user", {
     .notNull(),
 });
 
-export const session = pgTable(
+export const session = createTable(
   "session",
   {
     id: text("id").primaryKey(),
@@ -139,7 +140,7 @@ export const session = pgTable(
   (table) => [index("session_userId_idx").on(table.userId)],
 );
 
-export const account = pgTable(
+export const account = createTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -163,7 +164,7 @@ export const account = pgTable(
   (table) => [index("account_userId_idx").on(table.userId)],
 );
 
-export const verification = pgTable(
+export const verification = createTable(
   "verification",
   {
     id: text("id").primaryKey(),
@@ -196,4 +197,92 @@ export const accountRelations = relations(account, ({ one }) => ({
     fields: [account.userId],
     references: [user.id],
   }),
+}));
+
+// ____________________________________Recipe Relations___________________________________//
+export const recipeRelations = relations(recipes, ({ one, many }) => ({
+  author: one(user, {
+    fields: [recipes.authorId],
+    references: [user.id],
+  }),
+
+  ingredients: many(recipes_ingredients),
+  categories: many(recipes_categories),
+  steps: many(steps),
+  notes: many(recipeNotes),
+}));
+
+export const recipeIngredientRelations = relations(
+  recipes_ingredients,
+  ({ one }) => ({
+    recipe: one(recipes, {
+      fields: [recipes_ingredients.recipeId],
+      references: [recipes.id],
+    }),
+
+    ingredient: one(ingredients, {
+      fields: [recipes_ingredients.ingredientId],
+      references: [ingredients.id],
+    }),
+
+    unit: one(units, {
+      fields: [recipes_ingredients.unitId],
+      references: [units.id],
+    }),
+  }),
+);
+
+
+export const ingredientRelations = relations(
+  ingredients,
+  ({ many }) => ({
+    recipeIngredients: many(recipes_ingredients),
+  }),
+);
+
+export const unitRelations = relations(units, ({ many }) => ({
+  recipeIngredients: many(recipes_ingredients),
+}));
+
+export const recipeCategoryRelations = relations(
+  recipes_categories,
+  ({ one }) => ({
+    recipe: one(recipes, {
+      fields: [recipes_categories.recipeId],
+      references: [recipes.id],
+    }),
+
+    category: one(categories, {
+      fields: [recipes_categories.categoryId],
+      references: [categories.id],
+    }),
+  }),
+);
+
+export const categoryRelations = relations(
+  categories,
+  ({ many }) => ({
+    recipes: many(recipes_categories),
+  }),
+);
+
+export const stepRelations = relations(steps, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [steps.recipeId],
+    references: [recipes.id],
+  }),
+}));
+
+export const recipeNoteRelations = relations(
+  recipeNotes,
+  ({ one }) => ({
+    recipe: one(recipes, {
+      fields: [recipeNotes.recipeId],
+      references: [recipes.id],
+    }),
+  }),
+);
+
+export const userRecipeRelations = relations(user, ({ many }) => ({
+  recipes: many(recipes),
 }));
