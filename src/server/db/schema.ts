@@ -1,7 +1,7 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { index, integer, pgTableCreator, primaryKey, timestamp, varchar, pgTable, text, boolean, check, } from "drizzle-orm/pg-core";
+import { index, integer, pgTableCreator, primaryKey, timestamp, varchar, pgTable, text, boolean, check, numeric, } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
 /**
@@ -60,7 +60,7 @@ export const recipes_ingredients = createTable(
     recipeId: integer().references(() => recipes.id, { onDelete: "cascade"}).notNull(),
     ingredientId: integer().references(() => ingredients.id).notNull(),
     unitId: integer().references(() => units.id).notNull(),
-    amount: integer().notNull()
+    amount: numeric().notNull()
   },
   (table) => [
     primaryKey({columns: [table.recipeId, table.ingredientId, table.unitId]}),
