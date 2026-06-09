@@ -119,7 +119,7 @@ export const user = createTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  username: text("username").unique(),
+  username: text("username").unique().notNull(),
   displayUsername: text("display_username"),
 });
 
