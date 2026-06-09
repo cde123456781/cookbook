@@ -110,7 +110,7 @@ export const recipeNotes = createTable(
 
 export const user = createTable("user", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  username: text("username").notNull(),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
@@ -119,6 +119,8 @@ export const user = createTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  username: text("username").unique(),
+  displayUsername: text("display_username"),
 });
 
 export const session = createTable(
