@@ -22,7 +22,7 @@ export const recipes = createTable(
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
     description: varchar({ length: 256}),
     imageUrl: varchar({ length: 256 }),
-    authorId: integer().notNull().references(() => user.id, { onDelete: "cascade"})
+    authorId: text().notNull().references(() => user.id, { onDelete: "cascade"})
   },
   (t) => [index("recipe_title_idx").on(t.title)],
 );
@@ -109,7 +109,7 @@ export const recipeNotes = createTable(
 
 
 export const user = createTable("user", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
@@ -126,7 +126,7 @@ export const user = createTable("user", {
 export const session = createTable(
   "session",
   {
-    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    id: text("id").primaryKey(),
     expiresAt: timestamp("expires_at").notNull(),
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -135,7 +135,7 @@ export const session = createTable(
       .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
@@ -148,7 +148,7 @@ export const account = createTable(
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     accessToken: text("access_token"),
@@ -169,7 +169,7 @@ export const account = createTable(
 export const verification = createTable(
   "verification",
   {
-    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at").notNull(),
