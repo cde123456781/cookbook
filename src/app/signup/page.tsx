@@ -5,7 +5,7 @@ import { usePasswordVisibility } from "../hooks/usePasswordVisibility";
 import { HiddenPasswordEye, ShowPasswordEye } from "~/components/passwordIcons";
 import { useState } from "react";
 import { authClient } from "~/lib/auth-client";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 import { SignUpValidator } from "../validators/signUpValidator";
 
 
@@ -22,6 +22,7 @@ export default function SignUpPage() {
         password: ""
     });
 
+    const router = useRouter();
 
     const signUp = async () => {
         const validationResult = SignUpValidator.safeParse({username, email, password});
@@ -47,8 +48,8 @@ export default function SignUpPage() {
                 onRequest: () => {
                     setSubmitDisabled(true);
                 },
-                onSuccess: async () => {
-                    await router.push("/");
+                onSuccess: () => {
+                    router.push("/");
                 },
                 onError: (ctx) => {
                     alert(ctx.error.message);
