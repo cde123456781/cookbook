@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link";
 import { RecipeListCard } from "~/components/recipeListCard";
+import { authClient } from "~/lib/auth-client";
 
 
 const mockUrls = [
@@ -20,6 +23,30 @@ const MockImages = mockUrls.map((url, index) => ({
 
 
 export default function HomePage() {
+
+  const { 
+      data: session, 
+      isPending, //loading state
+      error, //error object
+      refetch //refetch the session
+  } = authClient.useSession() 
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="loading loading-spinner loading-xl"></span>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+    <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Please <Link href="/login">login</Link> to view your recipes</p>
+      </div>
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col">
       <SearchBar/>

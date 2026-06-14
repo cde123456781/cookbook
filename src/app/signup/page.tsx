@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePasswordVisibility } from "../hooks/usePasswordVisibility";
 import { HiddenPasswordEye, ShowPasswordEye } from "~/components/passwordIcons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "~/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { SignUpValidator } from "../validators/signUpValidator";
@@ -33,7 +33,6 @@ export default function SignUpPage() {
                 email: fieldErrors.email?.[0] ?? "",
                 password: fieldErrors.password?.[0] ?? ""
             });
-            console.log(errors);
 
 
         } else {
@@ -59,6 +58,33 @@ export default function SignUpPage() {
             );
         }
     };
+
+    const { 
+        data: session, 
+        isPending, //loading state
+        error, //error object
+        refetch //refetch the session
+    } = authClient.useSession() 
+
+    useEffect(() => {
+        if (session) {
+        router.replace("/"); // or push
+        }
+    }, [session, router]);
+
+    if (isPending) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <span className="loading loading-spinner loading-xl"></span>
+            </div>
+        );
+    }
+
+
+
+    if (session) {
+        return null;
+    }
     
     return (
     <div className="flex h-[80vh] justify-center items-center overscroll-none">
