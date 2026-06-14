@@ -33,7 +33,7 @@ export default function HomePage() {
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-[80vh] items-center justify-center">
         <span className="loading loading-spinner loading-xl"></span>
       </div>
     );
@@ -41,7 +41,7 @@ export default function HomePage() {
 
   if (!session) {
     return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex h-[80vh] items-center justify-center">
         <p className="text-gray-500">Please <Link href="/login">login</Link> to view your recipes</p>
       </div>
     );

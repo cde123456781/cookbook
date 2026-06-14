@@ -70,7 +70,7 @@ export default function LoginPage() {
 
     if (isPending) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
+            <div className="flex h-[80vh] items-center justify-center">
                 <span className="loading loading-spinner loading-xl"></span>
             </div>
         );
