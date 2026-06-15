@@ -87,7 +87,7 @@ export default function SignUpPage() {
     }
     
     return (
-    <div className="flex h-[80vh] justify-center items-center overscroll-none">
+    <div className="flex h-[80vh] justify-center ">
         <fieldset className="fieldset flex flex-col bg-base-200 border-base-300 rounded-box w-lg border pl-15 pr-15 pb-15 pt-10 items-center justify-center">
             <label className="fieldset-legend text-lg">Sign Up</label>
 

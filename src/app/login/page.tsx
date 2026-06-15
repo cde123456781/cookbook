@@ -83,12 +83,12 @@ export default function LoginPage() {
 
 
     return (
-    <div className="flex h-[80vh] justify-center items-center overscroll-none">
-        <fieldset className="fieldset flex flex-col bg-base-200 border-base-300 rounded-box w-lg border pl-15 pr-15 pb-15 pt-10 items-center justify-center">
+    <div className="flex h-[80vh] justify-center overscroll-none">
+        <fieldset className="fieldset flex flex-col bg-base-200 border-base-300 rounded-box w-lg border pl-15 pr-15 pb-15 pt-10 items-center ">
             <label className="fieldset-legend text-lg">Login</label>
 
             <label className="label text-base">Username</label>
-            <input type="text" className="input w-full" placeholder="Enter your username" />
+            <input type="text" onChange={(e) => setUsername(e.target.value)} className="input w-full" placeholder="Enter your username" />
             <p className="label text-sm text-error justify-center">{errors.username ? errors.username: "\u00A0"}</p>
             
             <label className="label text-base">Password</label>
@@ -96,6 +96,7 @@ export default function LoginPage() {
             <div className="relative w-full">
                 <input
                     type={inputType}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="input w-full pr-10"
                     placeholder="Enter your password"
                 />
