@@ -21,6 +21,8 @@ export default function LoginPage() {
         password: ""
     });
 
+    const [ loginError, setLoginError ] = useState("");
+
     const router = useRouter();
 
     const login = async () => {
@@ -47,7 +49,7 @@ export default function LoginPage() {
                     router.push("/");
                 },
                 onError: (ctx) => {
-                    alert(ctx.error.message);
+                    setLoginError(ctx.error.message);
                     setSubmitDisabled(false);
                 },
             }
@@ -83,7 +85,7 @@ export default function LoginPage() {
 
 
     return (
-    <div className="flex h-[80vh] justify-center overscroll-none">
+    <div className="flex min-h-[calc(100vh-64px-40px)] items-stretch justify-center overscroll-none m-5">
         <fieldset className="fieldset flex flex-col bg-base-200 border-base-300 rounded-box w-lg border pl-15 pr-15 pb-15 pt-10 items-center ">
             <label className="fieldset-legend text-lg">Login</label>
 
@@ -108,6 +110,9 @@ export default function LoginPage() {
                 }
             </div>
             <p className="label text-sm text-error">{errors.password || "\u00A0"}</p>
+
+
+            <p className="label m-2 text-sm text-error justify-center">{loginError ? loginError: "\u00A0"}</p>
 
             <button className="btn mt-4" disabled={submitDisabled} onClick={login}>Submit</button>
             <div className="divider"></div>

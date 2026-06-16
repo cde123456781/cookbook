@@ -21,6 +21,7 @@ export default function SignUpPage() {
         email: "",
         password: ""
     });
+    const [ signUpError, setSignUpError ] = useState("");
 
     const router = useRouter();
 
@@ -51,7 +52,7 @@ export default function SignUpPage() {
                     router.push("/");
                 },
                 onError: (ctx) => {
-                    alert(ctx.error.message);
+                    setSignUpError(ctx.error.message);
                     setSubmitDisabled(false);
                 },
             }
@@ -87,7 +88,7 @@ export default function SignUpPage() {
     }
     
     return (
-    <div className="flex h-[80vh] justify-center ">
+    <div className="flex min-h-[calc(100vh-64px-40px)] items-stretch justify-center m-5">
         <fieldset className="fieldset flex flex-col bg-base-200 border-base-300 rounded-box w-lg border pl-15 pr-15 pb-15 pt-10 items-center justify-center">
             <label className="fieldset-legend text-lg">Sign Up</label>
 
@@ -119,6 +120,7 @@ export default function SignUpPage() {
             </div>
             <p className="label text-sm text-error">{errors.password || "\u00A0"}</p>
 
+            <p className="label m-2 text-sm text-error justify-center">{signUpError ? signUpError: "\u00A0"}</p>
             <button className="btn mt-4" disabled={submitDisabled} onClick={signUp}>Submit</button>
             <div className="divider"></div>
             <Link className="text-base" href="/login">Already have an account? Login</Link>

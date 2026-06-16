@@ -31,9 +31,9 @@ export default async function RootLayout({
     <html lang="en" data-theme="retro" className={``}>
       <body>
         <header><Navbar initialSession={session} /></header>
-        <div className="pt-20">
-        {children}
-        </div>
+        <main className="pt-16 min-h-[calc(100vh-64px)]">
+          {children}
+        </main>
       </body>
     </html>
   );
