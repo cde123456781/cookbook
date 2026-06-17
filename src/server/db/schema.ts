@@ -40,7 +40,7 @@ export const ingredients = createTable(
   "ingredients",
   {
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: varchar({ length: 100 }).notNull().unique()
+    name: varchar({ length: 200 }).notNull().unique()
   }
 )
 
