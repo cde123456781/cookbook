@@ -15,12 +15,12 @@ export const createTable = pgTableCreator((name) => `cookbook_${name}`);
 export const recipes = createTable(
   "recipes",{
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    title: varchar({ length: 32 }).notNull(),
+    title: varchar({ length: 100 }).notNull(),
     createdAt: timestamp({ withTimezone: true })
       .$defaultFn(() => /* @__PURE__ */ new Date())
       .notNull(),
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-    description: varchar({ length: 256}),
+    description: varchar({ length: 1000}),
     imageUrl: varchar({ length: 256 }),
     authorId: text().notNull().references(() => user.id, { onDelete: "cascade"})
   },
@@ -32,7 +32,7 @@ export const categories = createTable(
   "categories",
   {
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: varchar({ length: 32 }).notNull().unique()
+    name: varchar({ length: 100 }).notNull().unique()
   }
 )
 
@@ -40,7 +40,7 @@ export const ingredients = createTable(
   "ingredients",
   {
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: varchar({ length: 32 }).notNull().unique()
+    name: varchar({ length: 100 }).notNull().unique()
   }
 )
 
@@ -87,7 +87,7 @@ export const steps = createTable(
   {
     recipeId: integer().references(() => recipes.id, { onDelete: "cascade" }).notNull(),
     stepNumber: integer().notNull(),
-    stepDescription: varchar({ length: 256 }).notNull(),
+    stepDescription: varchar({ length: 1000 }).notNull(),
     imageUrl: varchar({ length: 256 }),
   },
   (table) => [
@@ -100,7 +100,7 @@ export const recipeNotes = createTable(
   {
     id: integer().primaryKey().generatedByDefaultAsIdentity(),
     recipeId: integer().references(() => recipes.id, { onDelete: "cascade" }).notNull(),
-    note: varchar({ length: 256 }).notNull()
+    note: varchar({ length: 1000 }).notNull()
   }
 )
 
