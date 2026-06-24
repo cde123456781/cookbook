@@ -20,6 +20,7 @@ export const recipes = createTable(
       .$defaultFn(() => /* @__PURE__ */ new Date())
       .notNull(),
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+    cookTime: varchar({ length: 100 }).notNull(),
     description: varchar({ length: 1000}),
     imageUrl: varchar({ length: 256 }),
     authorId: text().notNull().references(() => user.id, { onDelete: "cascade"})
@@ -60,7 +61,7 @@ export const recipes_ingredients = createTable(
     recipeId: integer().references(() => recipes.id, { onDelete: "cascade"}).notNull(),
     ingredientId: integer().references(() => ingredients.id).notNull(),
     unitId: integer().references(() => units.id).notNull(),
-    amount: numeric().notNull()
+    amount: varchar({length: 10}).notNull()
   },
   (table) => [
     primaryKey({columns: [table.recipeId, table.ingredientId, table.unitId]}),
