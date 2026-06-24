@@ -3,8 +3,8 @@
 ## TODO
 
 - [x] Deploy on Vercel
-- [ ] Scaffold Basic UI
-- [ ] Connect to DB
+- [x] Scaffold Basic UI
+- [x] Connect to DB
 - [ ] Attach DB to UI
 - [ ] Auth
 - [ ] Create Recipe Functionality
