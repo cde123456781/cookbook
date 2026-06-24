@@ -6,7 +6,6 @@ import Navbar from "./(nav)/navbar";
 import { auth } from "~/lib/auth";
 import { headers } from "next/dist/server/request/headers";
 
-
 export const metadata: Metadata = {
   title: "My Cookbook",
   description: "A collection of your favorite recipes",
@@ -17,10 +16,6 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
-
-
-
-
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -30,10 +25,10 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme="retro" className={``}>
       <body>
-        <header><Navbar initialSession={session} /></header>
-        <main className="pt-16 min-h-[calc(100vh-64px)]">
-          {children}
-        </main>
+        <header>
+          <Navbar initialSession={session} />
+        </header>
+        <main className="min-h-[calc(100vh-64px)] pt-16">{children}</main>
       </body>
     </html>
   );

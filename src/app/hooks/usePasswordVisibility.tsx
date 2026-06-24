@@ -1,15 +1,15 @@
 import { useState } from "react";
 
 export function usePasswordVisibility() {
-    const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-    function toggleShowPassword() {
-        setShowPassword(!showPassword);
-    }
+  function toggleShowPassword() {
+    setShowPassword(!showPassword);
+  }
 
-    return {
-        showPassword,
-        toggleShowPassword,
-        inputType: showPassword ? "text" : "password"
-    }
+  return {
+    showPassword,
+    toggleShowPassword,
+    inputType: showPassword ? "text" : "password",
+  };
 }
