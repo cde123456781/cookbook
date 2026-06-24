@@ -65,7 +65,6 @@ export const recipes_ingredients = createTable(
   },
   (table) => [
     primaryKey({columns: [table.recipeId, table.ingredientId, table.unitId]}),
-    check("amount_check", sql`${table.amount} > 0`),
   ]
 )
 
