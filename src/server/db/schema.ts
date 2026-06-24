@@ -20,7 +20,7 @@ export const recipes = createTable(
       .$defaultFn(() => /* @__PURE__ */ new Date())
       .notNull(),
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-    cookTime: varchar({ length: 100 }).notNull(),
+    duration: varchar({ length: 100 }).notNull(),
     description: varchar({ length: 1000}),
     imageUrl: varchar({ length: 256 }),
     authorId: text().notNull().references(() => user.id, { onDelete: "cascade"})
