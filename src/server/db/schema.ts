@@ -48,16 +48,7 @@ export const categories = createTable("categories", {
   name: varchar({ length: 100 }).notNull().unique(),
 });
 
-export const ingredients = createTable("ingredients", {
-  id: integer().primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar({ length: 200 }).notNull().unique(),
-});
 
-export const units = createTable("units", {
-  id: integer().primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar({ length: 32 }).unique(),
-  plural: varchar({ length: 32 }).unique(),
-});
 
 export const recipes_ingredients = createTable(
   "recipes_ingredients",
@@ -65,16 +56,11 @@ export const recipes_ingredients = createTable(
     recipeId: integer()
       .references(() => recipes.id, { onDelete: "cascade" })
       .notNull(),
-    ingredientId: integer()
-      .references(() => ingredients.id)
-      .notNull(),
-    unitId: integer()
-      .references(() => units.id)
-      .notNull(),
-    amount: varchar({ length: 10 }).notNull(),
+    ingredient: varchar({ length: 200 }).notNull().unique(),
+    amount: varchar({ length: 100 }).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.recipeId, table.ingredientId, table.unitId] }),
+    primaryKey({ columns: [table.recipeId, table.ingredient] }),
   ],
 );
 
@@ -225,26 +211,9 @@ export const recipeIngredientRelations = relations(
       fields: [recipes_ingredients.recipeId],
       references: [recipes.id],
     }),
-
-    ingredient: one(ingredients, {
-      fields: [recipes_ingredients.ingredientId],
-      references: [ingredients.id],
-    }),
-
-    unit: one(units, {
-      fields: [recipes_ingredients.unitId],
-      references: [units.id],
-    }),
   }),
 );
 
-export const ingredientRelations = relations(ingredients, ({ many }) => ({
-  recipeIngredients: many(recipes_ingredients),
-}));
-
-export const unitRelations = relations(units, ({ many }) => ({
-  recipeIngredients: many(recipes_ingredients),
-}));
 
 export const recipeCategoryRelations = relations(
   recipes_categories,

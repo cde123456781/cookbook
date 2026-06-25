@@ -1,21 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import type { Category, Ingredient, Unit } from "~/app/types/recipe";
+import type { Category } from "~/app/types/recipe";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "~/lib/auth-client";
-import Select from "react-select/base";
+import Select from "react-select";
 import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
 
 export default function NewRecipeForm({
   categories,
-  ingredients,
-  units,
 }: {
   categories: Category[];
-  ingredients: Ingredient[];
-  units: Unit[];
 }) {
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState("");
@@ -26,9 +22,8 @@ export default function NewRecipeForm({
 
   const [recipeIngredients, setRecipeIngredients] = useState([
     {
-      ingredientId: "",
+      ingredient: "",
       amount: "",
-      unitId: "",
     },
   ]);
 
@@ -40,7 +35,7 @@ export default function NewRecipeForm({
     },
   ]);
 
-  const [notes, setNotes] = useState([""]);
+  const [notes, setNotes] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -103,10 +98,8 @@ export default function NewRecipeForm({
     const newIngredients = [...recipeIngredients];
     if (parameter == "amount") {
       newIngredients[index]!.amount = newValue;
-    } else if (parameter == "unit") {
-      newIngredients[index]!.unitId = newValue;
     } else if (parameter == "ingredient") {
-      newIngredients[index]!.ingredientId = newValue;
+      newIngredients[index]!.ingredient = newValue;
     }
 
     setRecipeIngredients(newIngredients);
@@ -122,13 +115,14 @@ export default function NewRecipeForm({
   const addIngredient = () => {
     const newIngredients = [...recipeIngredients];
     newIngredients.push({
-      ingredientId: "",
-      amount: "",
-      unitId: "",
+      ingredient: "",
+      amount: ""
     });
 
     setRecipeIngredients(newIngredients);
   };
+
+
 
   const addStep = () => {
     const newSteps = [...steps];
@@ -226,51 +220,24 @@ export default function NewRecipeForm({
           <div key={index} className="mb-3 flex items-center gap-2">
             <input
               type="text"
-              className="input w-32"
-              placeholder="2"
+              className="input flex-1"
+              placeholder="Enter the amount of the ingredient"
               value={ingredient.amount}
               onChange={(e) =>
                 updateIngredient(index, "amount", e.target.value)
               }
             />
 
-            <select
-              className="select select-bordered w-36"
-              value={ingredient.unitId}
-              onChange={(e) =>
-                updateIngredient(index, "unitId", e.target.value)
-              }
-            >
-              <option value="">Unit</option>
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.name}
-                </option>
-              ))}
-            </select>
 
-            <Select
-              options={ingredients}
-              value={null}
-              onChange={function (
-                newValue: SingleValue<{ id: number; name: string }>,
-                actionMeta: ActionMeta<{ id: number; name: string }>,
-              ): void {
-                throw new Error("Function not implemented.");
-              }}
-              inputValue={""}
-              onInputChange={function (
-                newValue: string,
-                actionMeta: InputActionMeta,
-              ): void {
-                throw new Error("Function not implemented.");
-              }}
-              onMenuOpen={function (): void {
-                throw new Error("Function not implemented.");
-              }}
-              onMenuClose={function (): void {
-                throw new Error("Function not implemented.");
-              }}
+
+            <input
+              type="text"
+              className="input flex-1"
+              placeholder="Enter the name of the ingredient"
+              value={ingredient.ingredient}
+              onChange={(e) =>
+                updateIngredient(index, "ingredient", e.target.value)
+              }
             />
 
             {recipeIngredients.length > 1 && (
@@ -319,7 +286,7 @@ export default function NewRecipeForm({
           }
         />
         */}
-
+        {steps.length > 1 && (
             <button
               type="button"
               className="btn btn-error btn-sm mt-2 self-start"
@@ -327,6 +294,7 @@ export default function NewRecipeForm({
             >
               Remove Step
             </button>
+        )}
           </div>
         ))}
 
