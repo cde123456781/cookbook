@@ -3,10 +3,11 @@
 import Link from "next/link";
 import type { Category } from "~/app/types/recipe";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { authClient } from "~/lib/auth-client";
 import Select from "react-select";
 import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
+import { steps } from "~/server/db/schema";
 
 export default function NewRecipeForm({
   categories,
@@ -16,7 +17,8 @@ export default function NewRecipeForm({
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [recipeImage, setRecipeImage] = useState<File | null>(null);
+  const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(null);
 
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
 
@@ -29,11 +31,19 @@ export default function NewRecipeForm({
 
   const [steps, setSteps] = useState([
     {
+      id: crypto.randomUUID(),
       stepNumber: 1,
       stepDescription: "",
-      imageUrl: "",
+      image: null as File | null,
+      imagePreview: null as string | null
     },
   ]);
+
+
+  // For clearing the recipe image input name when clearing image
+  const recipeImageInput = useRef<HTMLInputElement | null>(null);
+  
+  const stepsImageInput = useRef<Record<string, HTMLInputElement | null>>({});
 
   const [notes, setNotes] = useState<string[]>([]);
 
@@ -128,10 +138,14 @@ export default function NewRecipeForm({
     const newSteps = [...steps];
     const newNumber = newSteps.length + 1;
     newSteps.push({
+      id: crypto.randomUUID(),
       stepNumber: newNumber,
       stepDescription: "",
-      imageUrl: "",
+      image: null,
+      imagePreview: null
     });
+
+    
 
     setSteps(newSteps);
   };
@@ -140,7 +154,13 @@ export default function NewRecipeForm({
     const newSteps = [...steps];
     newSteps.splice(index, 1);
 
+    for (let i = index; i < newSteps.length; i++ ) {
+      newSteps[i]!.stepNumber = i + 1;
+    }
+
+
     setSteps(newSteps);
+
   };
 
   const updateStep = (index: number, parameter: string, newValue: string) => {
@@ -155,6 +175,31 @@ export default function NewRecipeForm({
   const submitRecipe = () => {
     return;
   };
+
+  const clearRecipeImage = () => {
+    setRecipeImage(null);
+    setRecipeImagePreview(null);
+
+    if (recipeImageInput.current) {
+      recipeImageInput.current.value = "";
+    }
+  };
+
+
+  const clearStepImage = (index: number) => {
+    const newSteps = [...steps];
+    newSteps[index]!.image = null;
+    newSteps[index]!.imagePreview = null;
+
+    const input = stepsImageInput.current[newSteps[index]!.id];
+
+    if (input) {
+      input.value = "";
+    }
+
+    setSteps(newSteps);
+
+  }
 
   return (
     <div className="m-5 flex justify-center">
@@ -188,14 +233,57 @@ export default function NewRecipeForm({
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <label className="label mt-4 text-base">Recipe Image URL</label>
+        <label className="label mt-4 text-base">Recipe Image</label>
         <input
-          type="text"
-          className="input w-full"
-          placeholder="https://..."
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
+          type="file"
+          ref={recipeImageInput}
+          accept="image/*"
+          className="file-input w-full"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+
+            if (!file) {
+              setRecipeImage(null);
+              setRecipeImagePreview(null);
+
+              if (recipeImageInput.current) {
+                recipeImageInput.current.value = "";
+              }
+              return;
+            }
+
+            if (!file.type.startsWith("image/")) {
+              alert("Please select an image.");
+              e.target.value = "";
+              return;
+            }
+
+            setRecipeImage(file);
+            setRecipeImagePreview(URL.createObjectURL(file));
+          }}
         />
+
+        {recipeImagePreview && (
+          <div className="mt-4 flex justify-center">
+            <div className="relative w-full max-w-md">
+              <img
+                src={recipeImagePreview}
+                alt="Recipe preview"
+                className="w-full rounded-lg border object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  clearRecipeImage();
+                }}
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Categories */}
         <div className="divider">Categories</div>
@@ -264,7 +352,7 @@ export default function NewRecipeForm({
         <div className="divider">Instructions</div>
 
         {steps.map((step, index) => (
-          <div key={index} className="card bg-base-100 mb-4 border p-4">
+          <div key={step.id} className="card bg-base-100 mb-4 border p-4">
             <div className="mb-2 font-semibold">Step {index + 1}</div>
 
             <textarea
@@ -276,16 +364,72 @@ export default function NewRecipeForm({
               }
             />
 
-            {/*
-        <input
-          className="input mt-2"
-          placeholder="Optional image URL"
-          value={step.imageUrl}
-          onChange={(e) =>
-            updateStep(index, "imageUrl", e.target.value)
-          }
-        />
-        */}
+            <label className="label mt-4 text-base">Step Image</label>
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={(element) => {
+                stepsImageInput.current[step.id] = element;
+              }}
+              className="file-input w-full"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+
+                if (!file) {
+                  const newSteps = [...steps]
+                  newSteps[index]!.image = null;
+                  newSteps[index]!.imagePreview = null;
+                  
+                  setSteps(newSteps);
+                  const input = stepsImageInput.current[step.id];
+
+                  if (input) {
+                    input.value = "";
+                  }
+                  return;
+                }
+
+                if (!file.type.startsWith("image/")) {
+                  alert("Please select an image.");
+                  e.target.value = "";
+                  return;
+                }
+
+                const newSteps = [...steps];
+                newSteps[index]!.image = file;
+
+                
+                newSteps[index]!.imagePreview = URL.createObjectURL(file);
+
+                setSteps(newSteps);
+              }}
+            />
+
+
+            {steps[index]!.imagePreview && (
+          <div className="mt-4 flex justify-center">
+            <div className="relative w-full max-w-md">
+              <img
+                src={steps[index]!.imagePreview}
+                alt={"Step " + index.toString() + "Image"}
+                className="w-full rounded-lg border object-cover"
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  clearStepImage(index);
+                }}
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+
         {steps.length > 1 && (
             <button
               type="button"
