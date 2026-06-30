@@ -8,6 +8,8 @@ import { authClient } from "~/lib/auth-client";
 import Select from "react-select";
 import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
 import { steps } from "~/server/db/schema";
+import { ingredientsValidator, recipeDetailsValidator } from "~/app/validators/recipeValidator";
+import {produce} from "immer"
 
 export default function NewRecipeForm({
   categories,
@@ -38,6 +40,28 @@ export default function NewRecipeForm({
       imagePreview: null as string | null
     },
   ]);
+
+  const createInitialErrors = () => ({
+  title: "",
+  duration: "",
+  recipeImage: "",
+  ingredients: [
+    {
+      amount: "",
+      ingredient: "",
+    },
+  ],
+  ingredientsError: "",
+
+  steps: [
+    {
+      description: ""
+    }
+  ],
+  stepsError: ""
+});
+
+  const [errors, setErrors] = useState(createInitialErrors());
 
 
   // For clearing the recipe image input name when clearing image
@@ -84,20 +108,25 @@ export default function NewRecipeForm({
   };
 
   const addNote = () => {
-    setNotes([...notes, ""]);
+    setNotes(produce(notes, draft => {
+      draft.push("");
+    }));
   };
 
   const removeNote = (index: number) => {
-    const newNotes = [...notes];
-    newNotes.splice(index, 1);
-
-    setNotes(newNotes);
+    setNotes(
+      produce(notes, draft => {
+        draft.splice(index, 1);
+      })
+    );
   };
 
   const updateNote = (index: number, newValue: string) => {
-    const newNotes = [...notes];
-    newNotes[index] = newValue;
-    setNotes(newNotes);
+    setNotes(
+      produce(notes, draft => {
+        draft[index] = newValue;
+      })
+    );
   };
 
   const updateIngredient = (
@@ -105,71 +134,94 @@ export default function NewRecipeForm({
     parameter: string,
     newValue: string,
   ) => {
-    const newIngredients = [...recipeIngredients];
     if (parameter == "amount") {
-      newIngredients[index]!.amount = newValue;
+      setRecipeIngredients(
+        produce(recipeIngredients, draft => {
+          draft[index]!.amount = newValue;
+        })
+      );
     } else if (parameter == "ingredient") {
-      newIngredients[index]!.ingredient = newValue;
+      setRecipeIngredients(
+        produce(recipeIngredients, draft => {
+          draft[index]!.ingredient = newValue;
+        })
+      );
     }
 
-    setRecipeIngredients(newIngredients);
   };
 
   const removeIngredient = (index: number) => {
-    const newIngredients = [...recipeIngredients];
-    newIngredients.splice(index, 1);
+    setRecipeIngredients(
+      produce(recipeIngredients, draft => {
+        draft.splice(index, 1);
+      })
+    );
 
-    setRecipeIngredients(newIngredients);
+    setErrors(
+      produce(errors, draft => {
+        draft.ingredients.splice(index, 1);
+      })
+    )
   };
 
   const addIngredient = () => {
-    const newIngredients = [...recipeIngredients];
-    newIngredients.push({
-      ingredient: "",
-      amount: ""
-    });
+    setRecipeIngredients(
+      produce(recipeIngredients, draft => {
+        draft.push({ingredient: "", amount: ""})
+      })
+    );
 
-    setRecipeIngredients(newIngredients);
+    setErrors(
+      produce(errors, draft => {
+        draft.ingredients.push({ingredient: "", amount: ""})
+      })
+    )
   };
 
 
 
   const addStep = () => {
-    const newSteps = [...steps];
-    const newNumber = newSteps.length + 1;
-    newSteps.push({
-      id: crypto.randomUUID(),
-      stepNumber: newNumber,
-      stepDescription: "",
-      image: null,
-      imagePreview: null
-    });
+    const newNumber = steps.length + 1;
 
-    
+    setSteps(
+      produce(steps, draft => {
+        draft.push({
+          id: crypto.randomUUID(),
+          stepNumber: newNumber,
+          stepDescription: "",
+          image: null,
+          imagePreview: null
+        })
+      })
+    );
 
-    setSteps(newSteps);
+    setErrors(
+      produce(errors, draft => {
+        draft.steps.push({
+          description: ""
+        })
+      })
+    )
   };
 
   const removeStep = (index: number) => {
-    const newSteps = [...steps];
-    newSteps.splice(index, 1);
-
-    for (let i = index; i < newSteps.length; i++ ) {
-      newSteps[i]!.stepNumber = i + 1;
-    }
-
-
-    setSteps(newSteps);
+    setSteps(produce(steps, draft => {
+      draft.splice(index, 1);
+      for (let i = index; i < draft.length; i++ ) {
+        draft[i]!.stepNumber = i + 1;
+      }
+    }));
 
   };
 
   const updateStep = (index: number, parameter: string, newValue: string) => {
-    const newSteps = [...steps];
     if (parameter == "stepDescription") {
-      newSteps[index]!.stepDescription = newValue;
+      setSteps(produce(steps, draft => {
+        draft[index]!.stepDescription = newValue;
+      }))
     }
 
-    setSteps(newSteps);
+
   };
 
   const submitRecipe = () => {
@@ -186,20 +238,62 @@ export default function NewRecipeForm({
   };
 
 
-  const clearStepImage = (index: number) => {
-    const newSteps = [...steps];
-    newSteps[index]!.image = null;
-    newSteps[index]!.imagePreview = null;
+  const clearStepImage = (index: number) => {   
 
-    const input = stepsImageInput.current[newSteps[index]!.id];
+    setSteps(produce(steps, draft => {
+      draft[index]!.image = null;
+      draft[index]!.imagePreview = null;
+    }))
+
+    const input = stepsImageInput.current[steps[index]!.id];
 
     if (input) {
       input.value = "";
     }
 
-    setSteps(newSteps);
 
   }
+
+  const handleSubmit = async () => {
+    const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration });
+    const ingredientsValidationResult = ingredientsValidator.safeParse(recipeIngredients);
+
+    const newErrors = createInitialErrors();
+
+    if (!recipeValidationResult.success) {
+      const fieldErrors = recipeValidationResult.error.flatten().fieldErrors;
+      newErrors.title = fieldErrors.title?.[0] ?? "";
+      newErrors.duration = fieldErrors.duration?.[0] ?? "";
+      newErrors.recipeImage = "";
+    }
+
+    if (!ingredientsValidationResult.success) {
+      const ingredientErrors = recipeIngredients.map(() => ({
+        amount: "",
+        ingredient: "",
+      }));
+
+      for (const issue of ingredientsValidationResult.error.issues) {
+        if (issue.path.length === 0) {
+          newErrors.ingredientsError = issue.message;
+          continue;
+        }
+
+        const index = issue.path[0] as number;
+        const field = issue.path[1] as "amount" | "ingredient";
+
+        ingredientErrors[index]![field] = issue.message;
+      }
+
+      newErrors.ingredients = ingredientErrors;
+
+
+
+    }
+
+
+    setErrors(newErrors);
+  };
 
   return (
     <div className="m-5 flex justify-center">
@@ -215,6 +309,9 @@ export default function NewRecipeForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+        <p className="label text-error justify-center text-sm">
+          {errors.title ? errors.title : "\u00A0"}
+        </p>
 
         <label className="label mt-4 text-base">Duration</label>
         <input
@@ -224,6 +321,9 @@ export default function NewRecipeForm({
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
         />
+        <p className="label text-error justify-center text-sm">
+          {errors.duration ? errors.duration : "\u00A0"}
+        </p>
 
         <label className="label mt-4 text-base">Description</label>
         <textarea
@@ -243,12 +343,7 @@ export default function NewRecipeForm({
             const file = e.target.files?.[0];
 
             if (!file) {
-              setRecipeImage(null);
-              setRecipeImagePreview(null);
-
-              if (recipeImageInput.current) {
-                recipeImageInput.current.value = "";
-              }
+              clearRecipeImage();
               return;
             }
 
@@ -262,6 +357,9 @@ export default function NewRecipeForm({
             setRecipeImagePreview(URL.createObjectURL(file));
           }}
         />
+        <p className="label text-error justify-center text-sm">
+          {errors.recipeImage ? errors.recipeImage : "\u00A0"}
+        </p>
 
         {recipeImagePreview && (
           <div className="mt-4 flex justify-center">
@@ -315,6 +413,9 @@ export default function NewRecipeForm({
                 updateIngredient(index, "amount", e.target.value)
               }
             />
+            <p className="label text-error justify-center text-sm">
+              {errors.ingredients[index]!.amount ? errors.ingredients[index]!.amount : "\u00A0"}
+            </p> 
 
 
 
@@ -327,6 +428,10 @@ export default function NewRecipeForm({
                 updateIngredient(index, "ingredient", e.target.value)
               }
             />
+
+            <p className="label text-error justify-center text-sm">
+              {errors.ingredients[index]!.ingredient ? errors.ingredients[index]!.ingredient : "\u00A0"}
+            </p> 
 
             {recipeIngredients.length > 1 && (
               <button
@@ -344,6 +449,7 @@ export default function NewRecipeForm({
           type="button"
           className="btn btn-outline mt-2"
           onClick={addIngredient}
+          disabled={recipeIngredients.length >= 20}
         >
           Add Ingredient
         </button>
@@ -364,6 +470,10 @@ export default function NewRecipeForm({
               }
             />
 
+            {/* <p className="label text-error justify-center text-sm">
+              {errors.steps[index].description ? errors.steps[index].description : "\u00A0"}
+            </p> */}
+
             <label className="label mt-4 text-base">Step Image</label>
 
             <input
@@ -377,16 +487,7 @@ export default function NewRecipeForm({
                 const file = e.target.files?.[0];
 
                 if (!file) {
-                  const newSteps = [...steps]
-                  newSteps[index]!.image = null;
-                  newSteps[index]!.imagePreview = null;
-                  
-                  setSteps(newSteps);
-                  const input = stepsImageInput.current[step.id];
-
-                  if (input) {
-                    input.value = "";
-                  }
+                  clearStepImage(index);
                   return;
                 }
 
@@ -396,15 +497,16 @@ export default function NewRecipeForm({
                   return;
                 }
 
-                const newSteps = [...steps];
-                newSteps[index]!.image = file;
-
-                
-                newSteps[index]!.imagePreview = URL.createObjectURL(file);
-
-                setSteps(newSteps);
+                setSteps(produce(steps, draft => {
+                  draft[index]!.image = file;
+                  draft[index]!.imagePreview = URL.createObjectURL(file);
+                }));
               }}
             />
+
+            {/* <p className="label text-error justify-center text-sm">
+              {errors.steps[index].image ? errors.steps[index].image : "\u00A0"}
+            </p> */}
 
 
             {steps[index]!.imagePreview && (
@@ -457,6 +559,10 @@ export default function NewRecipeForm({
               placeholder="Optional recipe note"
               onChange={(e) => updateNote(index, e.target.value)}
             />
+            
+            {/* <p className="label text-error justify-center text-sm">
+              {errors.notes[index] ? errors.notes[index] : "\u00A0"}
+            </p> */}
 
             <button
               type="button"
@@ -474,7 +580,7 @@ export default function NewRecipeForm({
 
         <div className="divider"></div>
 
-        <button className="btn btn-primary" onClick={submitRecipe}>
+        <button className="btn btn-primary" onClick={handleSubmit}>
           Create Recipe
         </button>
       </fieldset>

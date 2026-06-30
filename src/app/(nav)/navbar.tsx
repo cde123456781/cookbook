@@ -86,7 +86,7 @@ export default function Navbar(props: { initialSession: Session | null }) {
               return (
                 <ul className="menu menu-horizontal px-1">
                   <li>
-                    <Link href="/recipes" className="btn">
+                    <Link href="/myrecipes" className="btn">
                       My Recipes
                     </Link>
                   </li>
