@@ -7,9 +7,35 @@ export default async function LoginPage() {
     db.select().from(categories),
   ]);
 
+  const initialState = {
+    title: "",
+    duration: "",
+    description: "",
+    recipeImage: null,
+    recipeImagePreview: null,
+    selectedCategories: [],
+    recipeIngredients: [{
+      ingredient: "",
+      amount: ""
+    }],
+    steps: [
+      {
+        id: crypto.randomUUID(),
+        stepNumber: 1,
+        stepDescription: "",
+        image: null as File | null,
+        imagePreview: null as string | null
+      },
+    ],
+    notes: [],
+
+  }
+
   return (
     <NewRecipeForm
       categories={categoriesData}
+      initialState={initialState}
+      mode="add"
     />
   );
 }

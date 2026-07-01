@@ -1,45 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import type { Category } from "~/app/types/recipe";
+import type { Category, RecipeFormState } from "~/app/types/recipe";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { authClient } from "~/lib/auth-client";
 import Select from "react-select";
 import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
 import { steps } from "~/server/db/schema";
-import { ingredientsValidator, recipeDetailsValidator } from "~/app/validators/recipeValidator";
+import { ingredientsValidator, notesValidator, recipeDetailsValidator, stepsValidator } from "~/app/validators/recipeValidator";
 import {produce} from "immer"
 
 export default function NewRecipeForm({
   categories,
+  initialState,
+  mode
 }: {
   categories: Category[];
+  initialState: RecipeFormState
+  mode: string
 }) {
-  const [title, setTitle] = useState("");
-  const [duration, setDuration] = useState("");
-  const [description, setDescription] = useState("");
-  const [recipeImage, setRecipeImage] = useState<File | null>(null);
-  const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(null);
+  const [title, setTitle] = useState(initialState.title);
+  const [duration, setDuration] = useState(initialState.duration);
+  const [description, setDescription] = useState(initialState.description);
+  const [recipeImage, setRecipeImage] = useState<File | null>(initialState.recipeImage);
+  const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(initialState.recipeImagePreview);
 
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>(initialState.selectedCategories);
 
-  const [recipeIngredients, setRecipeIngredients] = useState([
-    {
-      ingredient: "",
-      amount: "",
-    },
-  ]);
+  const [recipeIngredients, setRecipeIngredients] = useState(initialState.recipeIngredients);
 
-  const [steps, setSteps] = useState([
-    {
-      id: crypto.randomUUID(),
-      stepNumber: 1,
-      stepDescription: "",
-      image: null as File | null,
-      imagePreview: null as string | null
-    },
-  ]);
+  const [steps, setSteps] = useState(initialState.steps);
+
+  const [notes, setNotes] = useState<string[]>(initialState.notes);
+
+  const categoryOptions = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }));
 
   const createInitialErrors = () => ({
   title: "",
@@ -55,10 +53,15 @@ export default function NewRecipeForm({
 
   steps: [
     {
-      description: ""
+      stepDescription: "",
+      image: ""
     }
   ],
-  stepsError: ""
+  stepsError: "",
+
+
+  notes: [""],
+  notesError: ""
 });
 
   const [errors, setErrors] = useState(createInitialErrors());
@@ -69,7 +72,6 @@ export default function NewRecipeForm({
   
   const stepsImageInput = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const [notes, setNotes] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -111,6 +113,13 @@ export default function NewRecipeForm({
     setNotes(produce(notes, draft => {
       draft.push("");
     }));
+
+
+    setErrors(
+      produce(errors, draft => {
+        draft.notes.push("");
+      })
+    )
   };
 
   const removeNote = (index: number) => {
@@ -119,6 +128,12 @@ export default function NewRecipeForm({
         draft.splice(index, 1);
       })
     );
+
+    setErrors(
+      produce(errors, draft => {
+        draft.notes.splice(index, 1);
+      })
+    )
   };
 
   const updateNote = (index: number, newValue: string) => {
@@ -198,7 +213,8 @@ export default function NewRecipeForm({
     setErrors(
       produce(errors, draft => {
         draft.steps.push({
-          description: ""
+          stepDescription: "",
+          image: ""
         })
       })
     )
@@ -211,6 +227,12 @@ export default function NewRecipeForm({
         draft[i]!.stepNumber = i + 1;
       }
     }));
+
+    setErrors(
+      produce(errors, draft => {
+        draft.steps.splice(index, 1);
+      })
+    )
 
   };
 
@@ -257,14 +279,18 @@ export default function NewRecipeForm({
   const handleSubmit = async () => {
     const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration });
     const ingredientsValidationResult = ingredientsValidator.safeParse(recipeIngredients);
+    const stepsValidationResult = stepsValidator.safeParse(steps);
+    const notesValidationResult = notesValidator.safeParse(notes);
 
     const newErrors = createInitialErrors();
+    let hasNoErrors = true;
 
     if (!recipeValidationResult.success) {
       const fieldErrors = recipeValidationResult.error.flatten().fieldErrors;
       newErrors.title = fieldErrors.title?.[0] ?? "";
       newErrors.duration = fieldErrors.duration?.[0] ?? "";
       newErrors.recipeImage = "";
+      hasNoErrors = false;
     }
 
     if (!ingredientsValidationResult.success) {
@@ -286,13 +312,80 @@ export default function NewRecipeForm({
       }
 
       newErrors.ingredients = ingredientErrors;
-
+      hasNoErrors = false;
 
 
     }
 
+    if (!stepsValidationResult.success) {
+      const stepsErrors = steps.map(() => ({
+        stepDescription: "",
+        image: ""
+      }));
+
+
+      for (const issue of stepsValidationResult.error.issues) {
+        if (issue.path.length === 0) {
+          newErrors.stepsError = issue.message;
+          continue;
+        }
+
+        const index = issue.path[0] as number;
+        const field = issue.path[1] as "stepDescription";
+
+        stepsErrors[index]![field] = issue.message;
+      }
+
+      newErrors.steps = stepsErrors;
+      hasNoErrors = false;
+
+    }
+
+
+    if (!notesValidationResult.success) {
+      const notesErrors = notes.map(() => (""));
+
+
+      for (const issue of notesValidationResult.error.issues) {
+        if (issue.path.length === 0) {
+          newErrors.stepsError = issue.message;
+          continue;
+        }
+
+        const index = issue.path[0] as number;
+
+        notesErrors[index] = issue.message;
+      }
+
+      newErrors.notes = notesErrors;
+      hasNoErrors = false;
+
+    }
+
+
+    if (recipeImage) {
+      if (!recipeImage.type.startsWith("image/")) {
+        newErrors.recipeImage = "Please upload image files only"
+        hasNoErrors = false;
+      }
+    }
+
+    for (let i = 0; i < steps.length; i ++ ) {
+      const image = steps[i]!.image;
+      if (image != null) {
+        if (!image.type.startsWith("image/")) {
+          newErrors.steps[i]!.image = "Please upload image files only";
+          hasNoErrors = false;
+        }
+      }
+    }
+
 
     setErrors(newErrors);
+
+    if (hasNoErrors) {
+      
+    }
   };
 
   return (
@@ -309,7 +402,7 @@ export default function NewRecipeForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <p className="label text-error justify-center text-sm">
+        <p className="label text-error text-sm">
           {errors.title ? errors.title : "\u00A0"}
         </p>
 
@@ -321,7 +414,7 @@ export default function NewRecipeForm({
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
         />
-        <p className="label text-error justify-center text-sm">
+        <p className="label text-error text-sm">
           {errors.duration ? errors.duration : "\u00A0"}
         </p>
 
@@ -348,7 +441,9 @@ export default function NewRecipeForm({
             }
 
             if (!file.type.startsWith("image/")) {
-              alert("Please select an image.");
+              setErrors(produce(errors, draft => {
+                draft.recipeImage = "Please upload image files only";
+              }))
               e.target.value = "";
               return;
             }
@@ -357,7 +452,7 @@ export default function NewRecipeForm({
             setRecipeImagePreview(URL.createObjectURL(file));
           }}
         />
-        <p className="label text-error justify-center text-sm">
+        <p className="label text-error text-sm">
           {errors.recipeImage ? errors.recipeImage : "\u00A0"}
         </p>
 
@@ -386,52 +481,81 @@ export default function NewRecipeForm({
         {/* Categories */}
         <div className="divider">Categories</div>
 
-        <select
-          multiple
-          className="select select-bordered h-40 w-full"
-          value={selectedCategories.map(String)}
-          onChange={handleCategoryChange}
-        >
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <Select
+          isMulti
+          options={categoryOptions}
+          value={categoryOptions.filter((option) =>
+            selectedCategories.includes(option.value)
+          )}
+          onChange={(selectedOptions) =>
+            setSelectedCategories(
+              selectedOptions ? selectedOptions.map((option) => option.value) : []
+            )
+          }
+          placeholder="Select categories..."
+          closeMenuOnSelect={false}
+          unstyled
+          classNames={{
+            control: ({ isFocused }) =>
+              `input input-bordered w-full min-h-12 h-auto flex flex-wrap items-center px-2 ${
+                isFocused ? "input-primary" : ""
+              }`,
+            valueContainer: () => "flex flex-wrap gap-1 py-1",
+            placeholder: () => "text-base-content/50",
+            input: () => "text-base-content",
+            menu: () =>
+              "mt-1 rounded-box border border-base-300 bg-base-100 shadow-lg z-50",
+            option: ({ isFocused, isSelected }) =>
+              `cursor-pointer px-3 py-2 ${
+                isSelected
+                  ? "bg-primary text-primary-content"
+                  : isFocused
+                  ? "bg-base-200"
+                  : ""
+              }`,
+            multiValue: () => "badge badge-primary gap-1",
+            multiValueLabel: () => "",
+            multiValueRemove: () =>
+              "cursor-pointer hover:text-error-content",
+          }}
+        />
 
         {/* Ingredients */}
         <div className="divider">Ingredients</div>
 
         {recipeIngredients.map((ingredient, index) => (
-          <div key={index} className="mb-3 flex items-center gap-2">
-            <input
-              type="text"
-              className="input flex-1"
-              placeholder="Enter the amount of the ingredient"
-              value={ingredient.amount}
-              onChange={(e) =>
-                updateIngredient(index, "amount", e.target.value)
-              }
-            />
-            <p className="label text-error justify-center text-sm">
-              {errors.ingredients[index]!.amount ? errors.ingredients[index]!.amount : "\u00A0"}
-            </p> 
+          <div key={index} className="mb-3 flex items-start gap-2">
+            <div className="flex-1">
+              <input
+                type="text"
+                className="input w-full"
+                placeholder="Enter the amount of the ingredient"
+                value={ingredient.amount}
+                onChange={(e) =>
+                  updateIngredient(index, "amount", e.target.value)
+                }
+              />
 
+              <p className="label text-error text-sm min-h-5">
+                {errors.ingredients[index]?.amount ?? "\u00A0"}
+              </p>
+            </div>
 
+            <div className="flex-1">
+              <input
+                type="text"
+                className="input w-full"
+                placeholder="Enter the name of the ingredient"
+                value={ingredient.ingredient}
+                onChange={(e) =>
+                  updateIngredient(index, "ingredient", e.target.value)
+                }
+              />
 
-            <input
-              type="text"
-              className="input flex-1"
-              placeholder="Enter the name of the ingredient"
-              value={ingredient.ingredient}
-              onChange={(e) =>
-                updateIngredient(index, "ingredient", e.target.value)
-              }
-            />
-
-            <p className="label text-error justify-center text-sm">
-              {errors.ingredients[index]!.ingredient ? errors.ingredients[index]!.ingredient : "\u00A0"}
-            </p> 
+              <p className="label text-error text-sm min-h-5">
+                {errors.ingredients[index]?.ingredient ?? "\u00A0"}
+              </p>
+            </div>
 
             {recipeIngredients.length > 1 && (
               <button
@@ -470,9 +594,9 @@ export default function NewRecipeForm({
               }
             />
 
-            {/* <p className="label text-error justify-center text-sm">
-              {errors.steps[index].description ? errors.steps[index].description : "\u00A0"}
-            </p> */}
+            <p className="label text-error text-sm">
+              {errors.steps[index]!.stepDescription ? errors.steps[index]!.stepDescription : "\u00A0"}
+            </p> 
 
             <label className="label mt-4 text-base">Step Image</label>
 
@@ -492,7 +616,9 @@ export default function NewRecipeForm({
                 }
 
                 if (!file.type.startsWith("image/")) {
-                  alert("Please select an image.");
+                  setErrors(produce(errors, draft => {
+                    draft.steps[index]!.image = "Please upload image files only"
+                  }))
                   e.target.value = "";
                   return;
                 }
@@ -504,9 +630,9 @@ export default function NewRecipeForm({
               }}
             />
 
-            {/* <p className="label text-error justify-center text-sm">
-              {errors.steps[index].image ? errors.steps[index].image : "\u00A0"}
-            </p> */}
+            <p className="label text-error text-sm">
+              {errors.steps[index]!.image ? errors.steps[index]!.image : "\u00A0"}
+            </p>
 
 
             {steps[index]!.imagePreview && (
@@ -552,17 +678,19 @@ export default function NewRecipeForm({
         <div className="divider">Notes</div>
 
         {notes.map((note, index) => (
-          <div key={index} className="mb-2 flex gap-2">
-            <input
-              className="input flex-1"
-              value={note}
-              placeholder="Optional recipe note"
-              onChange={(e) => updateNote(index, e.target.value)}
-            />
-            
-            {/* <p className="label text-error justify-center text-sm">
-              {errors.notes[index] ? errors.notes[index] : "\u00A0"}
-            </p> */}
+          <div key={index} className="mb-2 flex items-start gap-2">
+            <div className="flex-1">
+              <input
+                className="input w-full"
+                value={note}
+                placeholder="Optional recipe note"
+                onChange={(e) => updateNote(index, e.target.value)}
+              />
+
+              <p className="label text-error text-sm min-h-5">
+                {errors.notes[index] ?? "\u00A0"}
+              </p>
+            </div>
 
             <button
               type="button"
