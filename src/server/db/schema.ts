@@ -56,7 +56,7 @@ export const recipes_ingredients = createTable(
     recipeId: integer()
       .references(() => recipes.id, { onDelete: "cascade" })
       .notNull(),
-    ingredient: varchar({ length: 200 }).notNull().unique(),
+    ingredient: varchar({ length: 200 }).notNull(),
     amount: varchar({ length: 100 }).notNull(),
   },
   (table) => [
