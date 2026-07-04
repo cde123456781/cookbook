@@ -10,6 +10,7 @@ import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
 import { steps } from "~/server/db/schema";
 import { ingredientsValidator, notesValidator, recipeDetailsValidator, stepsValidator } from "~/app/validators/recipeValidator";
 import {produce} from "immer"
+import { createRecipeSchema } from "~/server/drizzleValidators/recipe";
 
 export default function NewRecipeForm({
   categories,
@@ -26,13 +27,13 @@ export default function NewRecipeForm({
   const [recipeImage, setRecipeImage] = useState<File | null>(initialState.recipeImage);
   const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(initialState.recipeImagePreview);
 
-  const [selectedCategories, setSelectedCategories] = useState<number[]>(initialState.selectedCategories);
+  const [selectedCategories, setSelectedCategories] = useState<{categoryId: number}[]>(initialState.selectedCategories);
 
   const [recipeIngredients, setRecipeIngredients] = useState(initialState.recipeIngredients);
 
   const [steps, setSteps] = useState(initialState.steps);
 
-  const [notes, setNotes] = useState<string[]>(initialState.notes);
+  const [notes, setNotes] = useState<{note: string}[]>(initialState.notes);
 
   const categoryOptions = categories.map((category) => ({
     value: category.id,
@@ -106,12 +107,12 @@ export default function NewRecipeForm({
       Number(option.value),
     );
 
-    setSelectedCategories(values);
+    setSelectedCategories(values.map((id) => ({categoryId: id})));
   };
 
   const addNote = () => {
     setNotes(produce(notes, draft => {
-      draft.push("");
+      draft.push({note: ""});
     }));
 
 
@@ -139,7 +140,7 @@ export default function NewRecipeForm({
   const updateNote = (index: number, newValue: string) => {
     setNotes(
       produce(notes, draft => {
-        draft[index] = newValue;
+        draft[index]!.note = newValue;
       })
     );
   };
@@ -246,9 +247,6 @@ export default function NewRecipeForm({
 
   };
 
-  const submitRecipe = () => {
-    return;
-  };
 
   const clearRecipeImage = () => {
     setRecipeImage(null);
@@ -277,13 +275,14 @@ export default function NewRecipeForm({
   }
 
   const handleSubmit = async () => {
-    const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration });
+    const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration, description });
     const ingredientsValidationResult = ingredientsValidator.safeParse(recipeIngredients);
     const stepsValidationResult = stepsValidator.safeParse(steps);
     const notesValidationResult = notesValidator.safeParse(notes);
 
     const newErrors = createInitialErrors();
     let hasNoErrors = true;
+    
 
     if (!recipeValidationResult.success) {
       const fieldErrors = recipeValidationResult.error.flatten().fieldErrors;
@@ -384,6 +383,32 @@ export default function NewRecipeForm({
     setErrors(newErrors);
 
     if (hasNoErrors) {
+
+      const payload = {
+        title: title,
+        description: description,
+        duration: duration,
+        ingredients: recipeIngredients,
+        steps: steps,
+        notes: notes,
+        categories: selectedCategories,
+      };
+      if (mode == "add") {
+        const result = createRecipeSchema.safeParse(
+          payload
+        );
+
+        if (!result.success) {
+          console.log("AAAAA");
+          console.log(result);
+          console.log(notes);
+        } else {
+          console.log(payload);
+        }
+
+      } else if (mode == "update") {
+        
+      }
       
     }
   };
@@ -391,7 +416,7 @@ export default function NewRecipeForm({
   return (
     <div className="m-5 flex justify-center">
       <fieldset className="fieldset bg-base-200 border-base-300 rounded-box flex w-full max-w-4xl flex-col border p-10">
-        <label className="fieldset-legend text-lg">Add Recipe</label>
+        <label className="fieldset-legend text-lg">{mode == "add" ? "Add Recipe" : "Update Recipe"}</label>
 
         {/* Recipe Details */}
         <label className="label mt-4 text-base">Recipe Title</label>
@@ -485,11 +510,15 @@ export default function NewRecipeForm({
           isMulti
           options={categoryOptions}
           value={categoryOptions.filter((option) =>
-            selectedCategories.includes(option.value)
+            selectedCategories.some((cat) => cat.categoryId === option.value)
           )}
           onChange={(selectedOptions) =>
             setSelectedCategories(
-              selectedOptions ? selectedOptions.map((option) => option.value) : []
+              selectedOptions
+                ? selectedOptions.map((option) => ({
+                    categoryId: option.value,
+                  }))
+                : []
             )
           }
           placeholder="Select categories..."
@@ -682,7 +711,7 @@ export default function NewRecipeForm({
             <div className="flex-1">
               <input
                 className="input w-full"
-                value={note}
+                value={note.note}
                 placeholder="Optional recipe note"
                 onChange={(e) => updateNote(index, e.target.value)}
               />
@@ -709,7 +738,7 @@ export default function NewRecipeForm({
         <div className="divider"></div>
 
         <button className="btn btn-primary" onClick={handleSubmit}>
-          Create Recipe
+          {mode == "add" ? "Create Recipe" : "Update Recipe"}
         </button>
       </fieldset>
     </div>

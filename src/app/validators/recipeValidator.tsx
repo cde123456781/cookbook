@@ -27,6 +27,12 @@ export const stepsValidator = z.array(stepsSchema)
   .min(1, "There must be at least one step")
   .max(20, "There cannot be more than 20 steps");
 
-export const notesValidator = z.array(
-  z.string().min(1, "Note cannot be empty").max(1000, "Note cannot exceed 1000 characters")
-).max(10, "There cannot be more than 10 notes");
+const notesSchema = z.object({
+  note: z.string()
+  .max(1000, "Note cannot be greater than 1000 characters")
+  .nonempty("Note cannot be empty"),
+});
+
+
+export const notesValidator = z.array(notesSchema)
+  .max(10, "There cannot be more than 10 notes");

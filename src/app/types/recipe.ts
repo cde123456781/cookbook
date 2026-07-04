@@ -10,7 +10,7 @@ export type RecipeFormState = {
   description: string;
   recipeImage: File | null;
   recipeImagePreview: string | null;
-  selectedCategories: number[];
+  selectedCategories: {categoryId: number}[];
   recipeIngredients: {
     ingredient: string;
     amount: string;
@@ -22,5 +22,29 @@ export type RecipeFormState = {
     image: File | null;
     imagePreview: string | null;
   }[];
-  notes: string[];
+  notes: {note: string}[];
 };
+
+
+export type RecipePayload = {
+  title: string,
+  description: string,
+  duration: string,
+  ingredients: {
+    ingredient: string;
+    amount: string;
+  }[],
+  steps: {
+    id: string;
+    stepNumber: number;
+    stepDescription: string;
+    image: File | null;
+    imagePreview: string | null;
+  }[],
+  notes: {
+    note: string;
+  }[],
+  categories: {
+    categoryId: number;
+  }[],
+}
