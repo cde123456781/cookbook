@@ -13,6 +13,7 @@ import {
   boolean,
   check,
   numeric,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -35,7 +36,6 @@ export const recipes = createTable(
     updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
     duration: varchar({ length: 100 }).notNull(),
     description: varchar({ length: 1000 }),
-    imageUrl: varchar({ length: 256 }),
     authorId: text()
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -80,15 +80,53 @@ export const recipes_categories = createTable(
 export const steps = createTable(
   "steps",
   {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
     recipeId: integer()
       .references(() => recipes.id, { onDelete: "cascade" })
       .notNull(),
     stepNumber: integer().notNull(),
     stepDescription: varchar({ length: 1000 }).notNull(),
-    imageUrl: varchar({ length: 256 }),
   },
-  (table) => [primaryKey({ columns: [table.recipeId, table.stepNumber] })],
+  (table) => [unique("steps_recipe_id_step_number_unique").on(table.recipeId, table.stepNumber)],
 );
+
+export const images = createTable(
+  "images",
+  {
+    id: integer().primaryKey().generatedByDefaultAsIdentity(),
+
+    key: varchar().notNull(),
+    url: varchar().notNull(),
+
+    userId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    recipeId: integer().references(() => recipes.id, {
+      onDelete: "cascade",
+    }),
+
+    stepId: integer().references(() => steps.id, {
+      onDelete: "cascade",
+    }),
+  },
+  (table) => [
+    unique("images_recipe_id_unique").on(table.recipeId),
+    unique("images_step_id_unique").on(table.stepId),
+
+    check(
+      "images_owner_check",
+      sql`
+        (
+          (${table.recipeId} IS NOT NULL AND ${table.stepId} IS NULL)
+          OR
+          (${table.recipeId} IS NULL AND ${table.stepId} IS NOT NULL)
+        )
+      `,
+    ),
+  ],
+);
+
 
 export const recipeNotes = createTable("recipeNotes", {
   id: integer().primaryKey().generatedByDefaultAsIdentity(),
@@ -175,6 +213,7 @@ export const verification = createTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+ 
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -202,6 +241,7 @@ export const recipeRelations = relations(recipes, ({ one, many }) => ({
   categories: many(recipes_categories),
   steps: many(steps),
   notes: many(recipeNotes),
+  recipeImage: one(images)
 }));
 
 export const recipeIngredientRelations = relations(
@@ -239,6 +279,8 @@ export const stepRelations = relations(steps, ({ one }) => ({
     fields: [steps.recipeId],
     references: [recipes.id],
   }),
+
+  stepImage: one(images)
 }));
 
 export const recipeNoteRelations = relations(recipeNotes, ({ one }) => ({
@@ -250,4 +292,24 @@ export const recipeNoteRelations = relations(recipeNotes, ({ one }) => ({
 
 export const userRecipeRelations = relations(user, ({ many }) => ({
   recipes: many(recipes),
+  images: many(images)
+}));
+
+
+
+export const imageRelations = relations(images, ({ one }) => ({
+  recipe: one(recipes, {
+    fields: [images.recipeId],
+    references: [recipes.id],
+  }),
+
+  step: one(steps, {
+    fields: [images.stepId],
+    references: [steps.id],
+  }),
+
+  user: one(user, {
+    fields: [images.userId],
+    references: [user.id],
+  }),
 }));

@@ -6,7 +6,6 @@ export const insertRecipeSchema = createInsertSchema(recipes).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
-    imageUrl: true
 });
 
 export const insertRecipeCategorySchema = createInsertSchema(recipes_categories);
@@ -14,7 +13,7 @@ export const insertRecipeCategorySchema = createInsertSchema(recipes_categories)
 export const insertRecipeIngredientSchema = createInsertSchema(recipes_ingredients);
 
 export const insertStepsSchema = createInsertSchema(steps).omit({
-    imageUrl: true
+    id: true
 });
 
 export const insertRecipeNotesSchema = createInsertSchema(recipeNotes).omit({

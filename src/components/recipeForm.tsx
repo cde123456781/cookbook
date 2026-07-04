@@ -11,6 +11,7 @@ import { steps } from "~/server/db/schema";
 import { ingredientsValidator, notesValidator, recipeDetailsValidator, stepsValidator } from "~/app/validators/recipeValidator";
 import {produce} from "immer"
 import { createRecipeSchema } from "~/server/drizzleValidators/recipe";
+import { createRecipe } from "~/server/repository/recipe";
 
 export default function NewRecipeForm({
   categories,
@@ -394,18 +395,7 @@ export default function NewRecipeForm({
         categories: selectedCategories,
       };
       if (mode == "add") {
-        const result = createRecipeSchema.safeParse(
-          payload
-        );
-
-        if (!result.success) {
-          console.log("AAAAA");
-          console.log(result);
-          console.log(notes);
-        } else {
-          console.log(payload);
-        }
-
+        await createRecipe(payload);
       } else if (mode == "update") {
         
       }
