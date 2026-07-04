@@ -1,3 +1,5 @@
+"use server";
+
 import type { RecipePayload } from "~/app/types/recipe";
 import { createRecipeSchema } from "../drizzleValidators/recipe";
 import { auth } from "~/lib/auth";
