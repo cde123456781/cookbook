@@ -41,6 +41,8 @@ export default function NewRecipeForm({
     label: category.name,
   }));
 
+  const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
+
   const createInitialErrors = () => ({
   title: "",
   duration: "",
@@ -277,6 +279,7 @@ export default function NewRecipeForm({
   }
 
   const handleSubmit = async () => {
+    setSubmitButtonDisabled(true);
     const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration, description });
     const ingredientsValidationResult = ingredientsValidator.safeParse(recipeIngredients);
     const stepsValidationResult = stepsValidator.safeParse(steps);
@@ -413,6 +416,7 @@ export default function NewRecipeForm({
     }
 
     setErrors(newErrors);
+    setSubmitButtonDisabled(false);
   };
 
   return (
@@ -739,7 +743,7 @@ export default function NewRecipeForm({
 
         <div className="divider"></div>
 
-        <button className="btn btn-primary" onClick={handleSubmit}>
+        <button className="btn btn-primary" onClick={handleSubmit} disabled={submitButtonDisabled}>
           {mode == "add" ? "Create Recipe" : "Update Recipe"}
         </button>
 
