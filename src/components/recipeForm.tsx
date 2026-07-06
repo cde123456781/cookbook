@@ -63,7 +63,8 @@ export default function NewRecipeForm({
 
 
   notes: [""],
-  notesError: ""
+  notesError: "",
+  formError: ""
 });
 
   const [errors, setErrors] = useState(createInitialErrors());
@@ -381,7 +382,7 @@ export default function NewRecipeForm({
     }
 
 
-    setErrors(newErrors);
+    
 
     if (hasNoErrors) {
 
@@ -393,14 +394,25 @@ export default function NewRecipeForm({
         steps: steps,
         notes: notes,
         categories: selectedCategories,
+        recipeImage: recipeImage,
       };
       if (mode == "add") {
-        await createRecipe(payload);
+        try {
+          await createRecipe(payload);
+        } catch (e) {
+          if (typeof e === "string") {
+              newErrors.formError = e.toUpperCase();
+          } else if (e instanceof Error) {
+              newErrors.formError = e.message;
+          }
+        }
       } else if (mode == "update") {
         
       }
       
     }
+
+    setErrors(newErrors);
   };
 
   return (
@@ -730,6 +742,10 @@ export default function NewRecipeForm({
         <button className="btn btn-primary" onClick={handleSubmit}>
           {mode == "add" ? "Create Recipe" : "Update Recipe"}
         </button>
+
+        <p className="label text-error text-sm">
+              {errors.formError ? errors.formError : "\u00A0"}
+            </p>
       </fieldset>
     </div>
   );

@@ -47,4 +47,10 @@ export type RecipePayload = {
   categories: {
     categoryId: number;
   }[],
+  recipeImage: File | null
+}
+
+
+export type UploadThingResponseData = {
+  key: string | undefined, url: string | undefined
 }
