@@ -5,24 +5,25 @@ export type Step = typeof steps.$inferSelect;
 export type RecipeIngredient = typeof recipes_ingredients.$inferSelect;
 
 export type RecipeFormState = {
-  title: string;
-  duration: string;
-  description: string;
-  recipeImage: File | null;
-  recipeImagePreview: string | null;
-  selectedCategories: {categoryId: number}[];
+  title: string,
+  duration: string,
+  description: string,
+  recipeImage: File | null,
+  recipeImagePreview: string | null,
+  selectedCategories: {categoryId: number}[],
   recipeIngredients: {
     ingredient: string;
     amount: string;
-  }[];
+  }[],
   steps: {
     id: string;
     stepNumber: number;
     stepDescription: string;
     image: File | null;
     imagePreview: string | null;
-  }[];
-  notes: {note: string}[];
+  }[],
+  notes: {note: string}[],
+  isPublic: boolean,
 };
 
 
@@ -47,10 +48,38 @@ export type RecipePayload = {
   categories: {
     categoryId: number;
   }[],
-  recipeImage: File | null
+  recipeImage: File | null,
+  isPublic: boolean
 }
 
 
 export type UploadThingResponseData = {
   key: string | undefined, url: string | undefined
+}
+
+
+export type RecipeQueryResult = {
+    duration: string;
+    id: number;
+    title: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+    description: string | null;
+    authorId: string;
+    categories: {
+        recipeId: number;
+        categoryId: number;
+        category: {
+            id: number;
+            name: string;
+        };
+    }[];
+    recipeImage: {
+        url: string;
+        id: number;
+        recipeId: number | null;
+        key: string;
+        userId: string;
+        stepId: number | null;
+    } | null;
 }

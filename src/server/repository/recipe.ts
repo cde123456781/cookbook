@@ -93,6 +93,7 @@ export const createRecipe = async (payload: RecipePayload) => {
                     title: payload.title,
                     duration: payload.duration,
                     authorId: userId,
+                    isPublic: payload.isPublic
                     
                 })
                 .returning({ id: recipes.id });

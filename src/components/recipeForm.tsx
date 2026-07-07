@@ -36,10 +36,13 @@ export default function NewRecipeForm({
 
   const [notes, setNotes] = useState<{note: string}[]>(initialState.notes);
 
+  const [isPublic, setIsPublic] = useState(initialState.isPublic);
+
   const categoryOptions = categories.map((category) => ({
     value: category.id,
     label: category.name,
   }));
+
 
   const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
 
@@ -148,6 +151,10 @@ export default function NewRecipeForm({
       })
     );
   };
+
+  const updateIsPublic = () => {
+    setIsPublic(!isPublic);
+  }
 
   const updateIngredient = (
     index: number,
@@ -278,7 +285,7 @@ export default function NewRecipeForm({
 
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async () => { 
     setSubmitButtonDisabled(true);
     const recipeValidationResult = recipeDetailsValidator.safeParse({ title, duration, description });
     const ingredientsValidationResult = ingredientsValidator.safeParse(recipeIngredients);
@@ -398,10 +405,12 @@ export default function NewRecipeForm({
         notes: notes,
         categories: selectedCategories,
         recipeImage: recipeImage,
+        isPublic: isPublic
       };
       if (mode == "add") {
         try {
           await createRecipe(payload);
+          router.push("/myrecipes");
         } catch (e) {
           if (typeof e === "string") {
               newErrors.formError = e.toUpperCase();
@@ -414,7 +423,6 @@ export default function NewRecipeForm({
       }
       
     }
-
     setErrors(newErrors);
     setSubmitButtonDisabled(false);
   };
@@ -742,6 +750,11 @@ export default function NewRecipeForm({
         </button>
 
         <div className="divider"></div>
+
+        <label className="label justify-center text-sm text-base-content pb-5">
+          <input type="checkbox" checked={isPublic} onChange={updateIsPublic} className="checkbox" />
+          Set public?
+        </label>
 
         <button className="btn btn-primary" onClick={handleSubmit} disabled={submitButtonDisabled}>
           {mode == "add" ? "Create Recipe" : "Update Recipe"}

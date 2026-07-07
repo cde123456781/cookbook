@@ -28,6 +28,7 @@ export default async function LoginPage() {
       },
     ],
     notes: [],
+    isPublic: false
 
   }
 

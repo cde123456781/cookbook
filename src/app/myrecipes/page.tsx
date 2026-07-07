@@ -1,39 +1,22 @@
-"use client";
-
 import Link from "next/link";
 import { RecipeListCard } from "~/components/recipeListCard";
+import { auth } from "~/lib/auth";
 import { authClient } from "~/lib/auth-client";
+import { getMyRecipes, getRecipes } from "~/server/queries/recipe";
+import { headers } from "next/headers";
+import { getCategories } from "~/server/queries/category";
+import { RecipeCollection } from "~/components/recipeCollection";
 
-const mockUrls = [
-  "https://placehold.net/default.png",
-  "https://placehold.net/default.png",
-  "https://placehold.net/default.png",
-  "https://placehold.net/default.png",
-  "https://placehold.net/600x800.png",
-  "https://placehold.net/600x800.png",
-  "https://placehold.net/600x800.png",
-];
 
-const MockImages = mockUrls.map((url, index) => ({
-  url: url,
-  key: index,
-}));
+export default async function MyRecipesPage() {
+  
 
-export default function MyRecipesPage() {
-  const {
-    data: session,
-    isPending, //loading state
-    error, //error object
-    refetch, //refetch the session
-  } = authClient.useSession();
+  const session = await auth.api.getSession({
+      headers: await headers() // you need to pass the headers object.
+  })
 
-  if (isPending) {
-    return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <span className="loading loading-spinner loading-xl"></span>
-      </div>
-    );
-  }
+
+  let recipes = [];
 
   if (!session) {
     return (
@@ -43,42 +26,17 @@ export default function MyRecipesPage() {
         </p>
       </div>
     );
+  } else {
+    recipes = await getMyRecipes(session.user.id);
   }
 
+
+  const categories = await getCategories();
+
+
   return (
-    <main className="flex min-h-screen flex-col">
-      <SearchBar />
-      <div className="flex flex-wrap items-center justify-center pt-10">
-        {MockImages.map((image) => (
-          /*
-            <div key={image.key} className="flex justify-center items-center w-48 h-48">
-              <img src={image.url} alt="image" className="object-contain h-[150px] w-[150px]"/>
-            </div>
-            */
-          <RecipeListCard
-            image_url={image.url}
-            recipe_title="Test Title"
-            key={image.key}
-          />
-        ))}
-      </div>
-    </main>
+    <RecipeCollection recipes={recipes}/>
   );
 }
 
-function SearchBar() {
-  return (
-    <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-m m-auto flex gap-8 border p-4">
-      <legend className="fieldset-legend">Search Recipes</legend>
-      <div className="">
-        <label className="label">Title</label>
-        <input type="text" className="input" placeholder="" />
-      </div>
 
-      <div className="">
-        <label className="label">Category</label>
-        <input type="text" className="input" placeholder="" />
-      </div>
-    </fieldset>
-  );
-}
