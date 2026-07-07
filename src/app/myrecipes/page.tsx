@@ -35,7 +35,7 @@ export default async function MyRecipesPage() {
 
 
   return (
-    <RecipeCollection recipes={recipes}/>
+    <RecipeCollection recipes={recipes} categories={categories}/>
   );
 }
 
