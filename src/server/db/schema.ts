@@ -329,3 +329,16 @@ export const imageRelations = relations(images, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+
+export const bookmarksRelations = relations(bookmarks, ({one}) => ({
+  recipe: one(recipes, {
+    fields: [bookmarks.recipeId],
+    references: [recipes.id]
+  }),
+
+  user: one(user, {
+    fields: [bookmarks.userId],
+    references: [user.id]
+  })
+}))
