@@ -39,6 +39,7 @@ export const recipes = createTable(
     authorId: text()
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    isPublic: boolean().notNull().default(false)
   },
   (t) => [index("recipe_title_idx").on(t.title)],
 );
@@ -135,6 +136,21 @@ export const recipeNotes = createTable("recipeNotes", {
     .notNull(),
   note: varchar({ length: 1000 }).notNull(),
 });
+
+export const bookmarks = createTable("bookmarks", {
+    recipeId: integer()
+    .notNull()
+    .references(() => recipes.id, { onDelete: "cascade" }),
+
+    userId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+}, 
+(table) => [
+  primaryKey({
+    columns: [table.recipeId, table.userId]
+  })
+]);
 
 export const user = createTable("user", {
   id: text("id").primaryKey(),
