@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { images, recipes } from "../db/schema";
-import { eq, or } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
 
 export async function getRecipes(userId: string) {
@@ -32,5 +32,25 @@ export async function getMyRecipes(userId: string) {
             recipeImage: true
         },
         where: (recipes, {eq}) => eq(recipes.authorId, userId)
+        });
+}
+
+export async function getRecipe(userId: string, recipeId: number) {
+  return await db.query.recipes.findFirst({
+        with: {
+            categories: {
+                with: {
+                    category: true,
+                },
+            },
+            steps: true,
+            notes: true,
+
+            recipeImage: true
+        },
+        where: and(or(
+            eq(recipes.isPublic, true),
+            eq(recipes.authorId, userId)
+        ), eq(recipes.id, recipeId))
         });
 }

@@ -83,3 +83,42 @@ export type RecipeQueryResult = {
         stepId: number | null;
     } | null;
 }
+
+
+export type FullRecipeDetails = {
+    id: number;
+    title: string;
+    duration: string;
+    createdAt: Date;
+    updatedAt: Date | null;
+    description: string | null;
+    authorId: string;
+    isPublic: boolean;
+    categories: {
+        recipeId: number;
+        categoryId: number;
+        category: {
+            id: number;
+            name: string;
+        };
+    }[];
+    steps: {
+        id: number;
+        recipeId: number;
+        stepNumber: number;
+        stepDescription: string;
+    }[];
+    notes: {
+        id: number;
+        note: string;
+        recipeId: number;
+    }[];
+    recipeImage: {
+        id: number;
+        url: string;
+        key: string;
+        recipeId: number | null;
+        userId: string;
+        stepId: number | null;
+    } | null;
+}
