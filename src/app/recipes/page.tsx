@@ -17,7 +17,7 @@ export default async function MyRecipesPage() {
     let recipes = [];
 
     if (!session) {
-        recipes = await getRecipes("");
+        recipes = await getRecipes();
     } else {
         recipes = await getRecipes(session.user.id);
     }

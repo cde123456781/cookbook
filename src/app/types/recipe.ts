@@ -107,6 +107,14 @@ export type FullRecipeDetails = {
         recipeId: number;
         stepNumber: number;
         stepDescription: string;
+        stepImage: {
+            url: string;
+            id: number;
+            recipeId: number | null;
+            key: string;
+            userId: string;
+            stepId: number | null;
+        } | null;
     }[];
     notes: {
         id: number;

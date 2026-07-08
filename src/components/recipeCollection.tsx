@@ -92,6 +92,7 @@ export function RecipeCollection(props:{
                             image_url={recipe.recipeImage ? recipe.recipeImage.url : ""}
                             recipe_title={recipe.title}
                             description={recipe.description}
+                            id={recipe.id}
                             key={recipe.id}
                         />
                         ))}

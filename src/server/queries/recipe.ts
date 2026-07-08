@@ -3,7 +3,7 @@ import { images, recipes } from "../db/schema";
 import { and, eq, or } from "drizzle-orm";
 
 
-export async function getRecipes(userId: string) {
+export async function getRecipes(userId?: string) {
     return await db.query.recipes.findMany({
         with: {
             categories: {
@@ -13,10 +13,12 @@ export async function getRecipes(userId: string) {
             },
             recipeImage: true
         },
-        where: or(
-            eq(recipes.isPublic, true),
-            eq(recipes.authorId, userId)
+        where: userId
+      ? or(
+          eq(recipes.isPublic, true),
+          eq(recipes.authorId, userId)
         )
+      : eq(recipes.isPublic, true),
         });
 }
 
@@ -43,7 +45,11 @@ export async function getRecipe(userId: string, recipeId: number) {
                     category: true,
                 },
             },
-            steps: true,
+            steps: {
+                with: {
+                    stepImage: true
+                }
+            },
             notes: true,
 
             recipeImage: true
