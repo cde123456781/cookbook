@@ -51,6 +51,7 @@ export async function getRecipe(userId: string, recipeId: number) {
                     stepImage: true
                 }
             },
+            ingredients: true,
             notes: true,
 
             recipeImage: true,
@@ -62,6 +63,32 @@ export async function getRecipe(userId: string, recipeId: number) {
         ), eq(recipes.id, recipeId))
         });
 }
+
+
+export async function getRecipeWithoutUser(recipeId: number) {
+  return await db.query.recipes.findFirst({
+        with: {
+            categories: {
+                with: {
+                    category: true,
+                },
+            },
+            steps: {
+                with: {
+                    stepImage: true
+                }
+            },
+            ingredients: true,
+            notes: true,
+
+            recipeImage: true,
+            author: true
+        },
+        where: eq(recipes.id, recipeId)
+        });
+}
+
+
 
 
 export async function getIsBookmarked(recipeId: number, userId: string) {
@@ -77,4 +104,12 @@ export async function getIsBookmarked(recipeId: number, userId: string) {
     } else {
         return false;
     }
+}
+
+export async function getImages(recipeId: number) {
+    const recipeImages = await db.query.images.findMany({
+        where: eq(images.recipeId, recipeId)
+    });
+
+    return recipeImages;
 }

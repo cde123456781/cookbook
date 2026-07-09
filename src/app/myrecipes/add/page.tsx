@@ -2,7 +2,7 @@ import { categories } from "~/server/db/schema";
 import { db } from "~/server/db";
 import NewRecipeForm from "~/components/recipeForm";
 
-export default async function LoginPage() {
+export default async function AddPage() {
   const [categoriesData] = await Promise.all([
     db.select().from(categories),
   ]);
@@ -37,6 +37,7 @@ export default async function LoginPage() {
       categories={categoriesData}
       initialState={initialState}
       mode="add"
+      recipeId={null}
     />
   );
 }

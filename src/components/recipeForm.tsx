@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { Category, RecipeFormState } from "~/app/types/recipe";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authClient } from "~/lib/auth-client";
 import Select from "react-select";
 import type { SingleValue, ActionMeta, InputActionMeta } from "react-select";
@@ -11,16 +11,19 @@ import { steps } from "~/server/db/schema";
 import { ingredientsValidator, notesValidator, recipeDetailsValidator, stepsValidator } from "~/app/validators/recipeValidator";
 import {produce} from "immer"
 import { createRecipeSchema } from "~/server/drizzleValidators/recipe";
-import { createRecipe } from "~/server/repository/recipe";
+import { createRecipe, updateRecipe } from "~/server/repository/recipe";
+import { fileTypeFromBlob } from "file-type";
 
 export default function NewRecipeForm({
   categories,
   initialState,
-  mode
+  mode,
+  recipeId
 }: {
   categories: Category[];
   initialState: RecipeFormState
   mode: string
+  recipeId: number | null
 }) {
   const [title, setTitle] = useState(initialState.title);
   const [duration, setDuration] = useState(initialState.duration);
@@ -46,28 +49,92 @@ export default function NewRecipeForm({
 
   const [submitButtonDisabled, setSubmitButtonDisabled] = useState(false);
 
+
+
+  // For clearing the recipe image input name when clearing image
+  const recipeImageInput = useRef<HTMLInputElement | null>(null);
+  
+  const stepsImageInput = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    const initialiseRecipeImage = async() => {
+      if (!initialState.recipeImagePreview) {
+        setRecipeImage(null);
+      } else {
+        const response = await fetch(initialState.recipeImagePreview);
+        const blob = await response.blob();
+
+        setRecipeImage(new File(
+          [blob],
+          "recipeImage"
+        ));
+      }
+
+    }
+
+
+
+  
+    const steps: {
+        id: string;
+        stepNumber: number;
+        stepDescription: string;
+        image: File | null;
+        imagePreview: string | null;
+    }[] = [];
+    const initialiseSteps = async() => {
+      for (const step of initialState.steps) {
+        const id = step.id;
+        const stepNumber = step.stepNumber;
+        const stepDescription = step.stepDescription;
+        const imagePreview = step.imagePreview;
+        let image;
+        if (!imagePreview) {
+          image = null;
+        } else {
+          const response = await fetch(imagePreview);
+          const blob = await response.blob();
+
+          image = new File([blob], "step" + stepNumber.toString());
+        }
+        steps.push({
+          id: id,
+          stepNumber: stepNumber,
+          stepDescription: stepDescription,
+          image: image,
+          imagePreview: imagePreview
+        })
+
+      }
+
+      setSteps(steps);
+    }
+
+    initialiseRecipeImage().catch((error) => console.log(error));
+    initialiseSteps().catch((error) => console.log(error));
+    console.log(steps);
+    console.log(recipeImage);
+  }, []);
+
   const createInitialErrors = () => ({
   title: "",
   duration: "",
   recipeImage: "",
-  ingredients: [
-    {
+  ingredients: recipeIngredients.map(() => 
+    ({
       amount: "",
       ingredient: "",
-    },
-  ],
+    })),
   ingredientsError: "",
 
-  steps: [
-    {
+  steps: steps.map(() => ({
       stepDescription: "",
       image: ""
-    }
-  ],
+  })),
   stepsError: "",
 
 
-  notes: [""],
+  notes: notes.map(() => ""),
   notesError: "",
   formError: ""
 });
@@ -75,10 +142,7 @@ export default function NewRecipeForm({
   const [errors, setErrors] = useState(createInitialErrors());
 
 
-  // For clearing the recipe image input name when clearing image
-  const recipeImageInput = useRef<HTMLInputElement | null>(null);
   
-  const stepsImageInput = useRef<Record<string, HTMLInputElement | null>>({});
 
 
   const router = useRouter();
@@ -375,7 +439,8 @@ export default function NewRecipeForm({
 
 
     if (recipeImage) {
-      if (!recipeImage.type.startsWith("image/")) {
+      const recipeImageValidation = await fileTypeFromBlob(recipeImage);
+      if (!recipeImageValidation?.mime.startsWith("image/")) {
         newErrors.recipeImage = "Please upload image files only"
         hasNoErrors = false;
       }
@@ -384,7 +449,8 @@ export default function NewRecipeForm({
     for (let i = 0; i < steps.length; i ++ ) {
       const image = steps[i]!.image;
       if (image != null) {
-        if (!image.type.startsWith("image/")) {
+        const imageValidation = await fileTypeFromBlob(image);
+        if (!imageValidation?.mime.startsWith("image/")) {
           newErrors.steps[i]!.image = "Please upload image files only";
           hasNoErrors = false;
         }
@@ -419,6 +485,20 @@ export default function NewRecipeForm({
           }
         }
       } else if (mode == "update") {
+        try {
+          if (recipeId) {
+            await updateRecipe(payload, recipeId);
+            router.push("/recipes/" + recipeId.toString());
+          } else {
+            throw new Error("recipeId not found");
+          }
+        } catch (e) {
+          if (typeof e === "string") {
+              newErrors.formError = e.toUpperCase();
+          } else if (e instanceof Error) {
+              newErrors.formError = e.message;
+          }
+        }
         
       }
       

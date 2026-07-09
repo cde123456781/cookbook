@@ -8,6 +8,7 @@ import { deleteRecipe } from "~/server/repository/recipe";
 import { router } from "better-auth/api";
 import { useRouter } from "next/navigation";
 import { PrivateButton } from "./privateButton";
+import Link from "next/link";
 
 
 export default function RecipeDisplay(props: {
@@ -103,7 +104,7 @@ export default function RecipeDisplay(props: {
                     <PrivateButton isPublic={recipe.isPublic} recipeId={recipe.id} />
                   </li>
                   <li>
-                    <button>Edit</button>
+                    <Link href={"/recipes/" + recipe.id.toString() + "/update"}><button>Edit</button></Link>
                   </li>
                   <li>
                     <button className="text-error" onClick={handleDelete} disabled={isDeleteButtonDisabled}>Delete</button>
