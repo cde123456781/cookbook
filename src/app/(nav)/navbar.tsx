@@ -76,7 +76,7 @@ export default function Navbar(props: { initialSession: Session | null }) {
                     </Link>
                   </li>
                   <li>
-                    <Link href="signup" className="btn">
+                    <Link href="/signup" className="btn">
                       Sign Up
                     </Link>
                   </li>

@@ -1,5 +1,6 @@
+import { username } from "better-auth/plugins";
 import { db } from "../db";
-import { images, recipes } from "../db/schema";
+import { bookmarks, images, recipes } from "../db/schema";
 import { and, eq, or } from "drizzle-orm";
 
 
@@ -52,11 +53,28 @@ export async function getRecipe(userId: string, recipeId: number) {
             },
             notes: true,
 
-            recipeImage: true
+            recipeImage: true,
+            author: true
         },
         where: and(or(
             eq(recipes.isPublic, true),
             eq(recipes.authorId, userId)
         ), eq(recipes.id, recipeId))
         });
+}
+
+
+export async function getIsBookmarked(recipeId: number, userId: string) {
+    const bookmark = await db.query.bookmarks.findFirst({
+        where: and(
+            eq(bookmarks.recipeId, recipeId),
+            eq(bookmarks.userId, userId)
+        )
+    });
+
+    if (bookmark) {
+        return true;
+    } else {
+        return false;
+    }
 }

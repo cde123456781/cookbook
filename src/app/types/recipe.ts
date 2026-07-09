@@ -90,7 +90,7 @@ export type FullRecipeDetails = {
     title: string;
     duration: string;
     createdAt: Date;
-    updatedAt: Date | null;
+    updatedAt: Date;
     description: string | null;
     authorId: string;
     isPublic: boolean;
@@ -129,4 +129,7 @@ export type FullRecipeDetails = {
         userId: string;
         stepId: number | null;
     } | null;
+    author: {
+      username: string;
+    }
 }

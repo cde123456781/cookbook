@@ -39,7 +39,7 @@ export function SearchBar({titleInput, onTitleChange, categoryOptions, selectedC
 
 
   return (
-    <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-m mx-auto flex border p-4">
+    <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-96 flex border p-4">
       <legend className="fieldset-legend">Search Recipes</legend>
       <div className="">
         <label className="label">Title</label>

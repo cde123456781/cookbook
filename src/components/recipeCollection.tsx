@@ -7,7 +7,7 @@ import type { RecipeQueryResult } from "~/app/types/recipe";
 import { RecipeListCard } from "./recipeListCard";
 import { useEffect, useState } from "react";
 import type { MultiValue } from "react-select";
-
+import { usePathname } from "next/navigation";
 
 export function RecipeCollection(props:{
     recipes: RecipeQueryResult[],
@@ -25,6 +25,7 @@ export function RecipeCollection(props:{
         value: category.id,
         label: category.name,
     }));
+    const pathname = usePathname();
 
 
     const updateTitleInput = (newValue: string) => {
@@ -63,43 +64,44 @@ export function RecipeCollection(props:{
     }, [selectedCategories, titleInput]);
   
 
-    if (props.recipes.length == 0 ) {
-        return (
-            <div className="flex min-h-screen flex-col">
-                <p className="text-gray-500">
-                    No recipes could be found
-                </p>
-
-
-            </div>
-
-        );
-
-    } else {
+    
             
-        return (
-                <div className="flex min-h-screen flex-col">
-                    <SearchBar 
-                        titleInput={titleInput} 
-                        onTitleChange={updateTitleInput} 
-                        categoryOptions={categoryOptions} 
-                        selectedCategories={selectedCategories} 
-                        handleSelectedCategories={handleCategoryChange}
-                    /> 
-                    <div className="flex flex-wrap items-center justify-center pt-10">
-                        {displayRecipes.map((recipe) => (
-                        <RecipeListCard
-                            image_url={recipe.recipeImage ? recipe.recipeImage.url : ""}
-                            recipe_title={recipe.title}
-                            description={recipe.description}
-                            id={recipe.id}
-                            key={recipe.id}
-                        />
-                        ))}
-                    </div>
+    return (
+        <div className="flex min-h-screen flex-col">
+            <div className="flex flex-row justify-center items-center">
+                <SearchBar 
+                    titleInput={titleInput} 
+                    onTitleChange={updateTitleInput} 
+                    categoryOptions={categoryOptions} 
+                    selectedCategories={selectedCategories} 
+                    handleSelectedCategories={handleCategoryChange}
+                /> 
+                {pathname == "/myrecipes" &&
+                    <Link href="/myrecipes/add"><button className="btn ml-5">Add Recipe</button></Link>
+                }
+            </div>
+            <div className="flex flex-wrap items-center justify-center pt-10">
+                {displayRecipes.map((recipe) => (
+                <RecipeListCard
+                    image_url={recipe.recipeImage ? recipe.recipeImage.url : ""}
+                    recipe_title={recipe.title}
+                    description={recipe.description}
+                    id={recipe.id}
+                    key={recipe.id}
+                />
+                ))}
+
+                {displayRecipes.length == 0 && 
+                <div className="flex h-[80vh] justify-center">
+                    <p className="text-gray-500">
+                    No recipes could be found
+                    </p>
                 </div>
+                }
+            </div>
+        </div>
 
 
-        );
-    }
+    );
+    
 }

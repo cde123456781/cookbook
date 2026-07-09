@@ -1,12 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import type { FullRecipeDetails } from "~/app/types/recipe";
+import { authClient } from "~/lib/auth-client";
+import { BookmarkButton } from "./bookmarkButton";
+import { deleteRecipe } from "~/server/repository/recipe";
+import { router } from "better-auth/api";
+import { useRouter } from "next/navigation";
+import { PrivateButton } from "./privateButton";
+
 
 export default function RecipeDisplay(props: {
-  recipe: FullRecipeDetails | undefined
+  recipe: FullRecipeDetails | undefined,
+  isBookmarked: boolean
 }) {
+    const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
+    const router = useRouter();
+
 
     const recipe = props.recipe;
+    const {
+        data: session,
+        isPending, //loading state
+        error, //error object
+        refetch, //refetch the session
+      } = authClient.useSession();
+
 
     if (!recipe) {
         return (
@@ -18,6 +37,26 @@ export default function RecipeDisplay(props: {
         );
 
     }
+    let userId;
+
+
+    const handleDelete = async() => {
+      setIsDeleteButtonDisabled(true);
+      try {
+        await deleteRecipe(recipe.id)
+        router.push("/myrecipes")
+      } finally {
+
+      }
+
+
+
+      setIsDeleteButtonDisabled(false);
+    };
+    
+
+    
+
 
 
   return (
@@ -38,20 +77,46 @@ export default function RecipeDisplay(props: {
 
         <div className="card-body">
           <div className="flex justify-between gap-4 items-start">
-            <h1 className="card-title text-4xl">
-              {recipe.title}
-            </h1>
+            <div>
+              <h1 className="card-title text-4xl">
+                {recipe.title}
+              </h1>
+              <p className="text-lg text-base-content/60 mt-1">
+                Submitted by: {recipe.author.username}
+              </p>
+            </div>
 
-            <span
-              className={`badge ${
-                recipe.isPublic
-                  ? "badge-success"
-                  : "badge-warning"
-              }`}
-            >
-              {recipe.isPublic ? "Public" : "Private"}
-            </span>
+            {session?.user.id == recipe.authorId &&
+              <div className="dropdown dropdown-end">
+                <button
+                  tabIndex={0}
+                  className="btn btn-ghost btn-sm btn-circle"
+                >
+                  ⋮
+                </button>
+
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow"
+                >
+                  <li>
+                    <PrivateButton isPublic={recipe.isPublic} recipeId={recipe.id} />
+                  </li>
+                  <li>
+                    <button>Edit</button>
+                  </li>
+                  <li>
+                    <button className="text-error" onClick={handleDelete} disabled={isDeleteButtonDisabled}>Delete</button>
+                  </li>
+                </ul>
+              </div>
+              }
+
+              {session && session.user.id != recipe.authorId &&
+                <BookmarkButton isBookmarked={props.isBookmarked} recipeId={recipe.id}/>
+              }
           </div>
+            
 
           <div className="flex flex-wrap gap-2 mt-2">
             {recipe.categories.map(({ category }) => (
@@ -80,11 +145,24 @@ export default function RecipeDisplay(props: {
             </div>
 
             <div className="stat bg-base-100 rounded-box">
-              <div className="stat-title">Created</div>
-              <div className="stat-value text-xl">
-                {recipe.createdAt.toLocaleDateString()}
-              </div>
-            </div>
+  <div className="flex flex-col gap-3">
+    <div>
+      <div className="stat-title">Created</div>
+      <div className="text-lg font-semibold">
+        {recipe.createdAt.toLocaleDateString()}
+      </div>
+    </div>
+
+    <div className="divider my-0"></div>
+
+    <div>
+      <div className="stat-title">Updated</div>
+      <div className="text-lg font-semibold">
+        {recipe.updatedAt.toLocaleDateString()}
+      </div>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       </section>
@@ -161,8 +239,6 @@ export default function RecipeDisplay(props: {
 
       {/* Metadata */}
       <section className="text-sm opacity-60">
-        <p>Recipe ID: {recipe.id}</p>
-        <p>Author ID: {recipe.authorId}</p>
 
         {recipe.updatedAt && (
           <p>

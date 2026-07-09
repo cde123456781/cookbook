@@ -5,10 +5,11 @@ import { createRecipeSchema } from "../drizzleValidators/recipe";
 import { auth } from "~/lib/auth";
 import { headers } from "next/headers";
 import { db } from "../db";
-import { images, recipeNotes, recipes, recipes_categories, recipes_ingredients, steps } from "../db/schema";
+import { bookmarks, images, recipeNotes, recipes, recipes_categories, recipes_ingredients, steps } from "../db/schema";
 import { utapi } from "~/server/uploadthing";
 import { fileTypeFromBlob } from "file-type";
 import { string } from "zod";
+import { and, eq } from "drizzle-orm";
 
 export const createRecipe = async (payload: RecipePayload) => {
     const session = await auth.api.getSession({
@@ -178,4 +179,76 @@ export const createRecipe = async (payload: RecipePayload) => {
         }
 
     }
+}
+
+
+export const addBookmark = async (recipeId: number) => {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    const userId = session?.user?.id;
+
+    if (userId === undefined) {
+        throw new Error("User not logged in");
+    }
+
+    const bookmark = await db.query.bookmarks.findFirst({
+        where: and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.recipeId, recipeId)
+        ),
+    });
+
+    if (bookmark) {
+        await db.delete(bookmarks).where(
+            and(
+            eq(bookmarks.userId, userId),
+            eq(bookmarks.recipeId, recipeId)
+        ));
+    } else {
+        await db.insert(bookmarks).values({
+            userId: userId,
+            recipeId: recipeId
+        });
+    }
+
+}
+
+export const deleteRecipe = async (recipeId: number) => {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    const userId = session?.user?.id;
+
+    if (userId === undefined) {
+        throw new Error("User not logged in");
+    }
+
+    await db.delete(recipes).where(
+        and(
+        eq(recipes.authorId, userId),
+        eq(recipes.id, recipeId)
+    ));
+}
+
+export const setRecipePrivacy = async (recipeId:number, isPublic: boolean) => {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    const userId = session?.user?.id;
+
+    if (userId === undefined) {
+        throw new Error("User not logged in");
+    }
+
+    await db.update(recipes).set(
+        {isPublic: isPublic}
+    ).where(
+        and(
+        eq(recipes.authorId, userId),
+        eq(recipes.id, recipeId)
+    ));
 }

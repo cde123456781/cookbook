@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import RecipeDisplay from "~/components/recipeDisplay";
 import { auth } from "~/lib/auth";
-import { getRecipe } from "~/server/queries/recipe";
+import { getIsBookmarked, getRecipe } from "~/server/queries/recipe";
 
 export default async function RecipePage({params}: {params: Promise<{recipe: string}>}) {
   const session = await auth.api.getSession({
@@ -28,8 +28,10 @@ export default async function RecipePage({params}: {params: Promise<{recipe: str
         }
     }
 
+    const isBookmarked = await getIsBookmarked(Number(recipeId), (session ? session.user.id : ""))
+
 
   return (
-    <RecipeDisplay recipe={recipe}/>
+    <RecipeDisplay recipe={recipe} isBookmarked={isBookmarked}/>
   );
 }

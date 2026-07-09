@@ -33,7 +33,7 @@ export const recipes = createTable(
     createdAt: timestamp({ withTimezone: true })
       .$defaultFn(() => /* @__PURE__ */ new Date())
       .notNull(),
-    updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+    updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()).notNull(),
     duration: varchar({ length: 100 }).notNull(),
     description: varchar({ length: 1000 }),
     authorId: text()

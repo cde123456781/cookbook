@@ -427,6 +427,13 @@ export default function NewRecipeForm({
     setSubmitButtonDisabled(false);
   };
 
+  console.log({
+    stepsLength: steps.length,
+    errorsStepsLength: errors.steps.length,
+    steps,
+    errorsSteps: errors.steps,
+  });
+
   return (
     <div className="m-5 flex justify-center">
       <fieldset className="fieldset bg-base-200 border-base-300 rounded-box flex w-full max-w-4xl flex-col border p-10">
@@ -638,8 +645,8 @@ export default function NewRecipeForm({
             />
 
             <p className="label text-error text-sm">
-              {errors.steps[index]!.stepDescription ? errors.steps[index]!.stepDescription : "\u00A0"}
-            </p> 
+              {errors.steps[index]?.stepDescription ?? "\u00A0"}
+            </p>
 
             <label className="label mt-4 text-base">Step Image</label>
 
@@ -674,7 +681,7 @@ export default function NewRecipeForm({
             />
 
             <p className="label text-error text-sm">
-              {errors.steps[index]!.image ? errors.steps[index]!.image : "\u00A0"}
+              {errors.steps[index]?.image ?? "\u00A0"}
             </p>
 
 
